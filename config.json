@@ -1,0 +1,3 @@
+{
+    "save_path": "tmp/{agent}/{environment}/{params}/{run}"
+}
