@@ -25,9 +25,12 @@ NEEDS_TAG=`git describe --contains $GIT_COMMIT`
 
 # only tag if no tag already
 if [ -z "$NEEDS_TAG" ]; then
+    sed -i -E "s/(version=).+?,/\1$NEW_TAG,/" setup.py
+    git add setup.py
+    git commit -m "updating to version $NEW_TAG"
     echo "Tagged with $NEW_TAG"
     git tag $NEW_TAG
-    git push --tags
+    git push --follow-tags
 else
     echo "Already a tag on this commit"
 fi
