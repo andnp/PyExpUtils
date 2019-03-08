@@ -31,7 +31,8 @@ if [ -z "$NEEDS_TAG" ]; then
     git commit -m "updating to version $NEW_TAG"
     echo "Tagged with $NEW_TAG"
     git tag $NEW_TAG
-    git push --follow-tags
+    git push
+    git push --tags
 else
     echo "Already a tag on this commit"
 fi
