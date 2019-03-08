@@ -5,7 +5,7 @@ def memoize(f):
         for arg in args:
             s = s + '__' + str(arg)
         for arg in kwargs:
-            s = s + '__' + str(kwargs[arg])
+            s = s + '__' + str(arg) + '-' + str(kwargs[arg])
         return s
 
     def wrapped(*args, **kwargs):
