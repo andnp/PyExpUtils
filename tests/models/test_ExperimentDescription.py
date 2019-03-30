@@ -13,8 +13,14 @@ class TestSavingPath(unittest.TestCase):
             }
         }
 
-        exp = ExperimentDescription(desc)
-        key = '{name}/{algorithm}/{environment}/{params}/{run}'
+        class MLExpDesc(ExperimentDescription):
+            def __init__(self, d):
+                super().__init__(d)
+                self.algorithm = d['algorithm']
+                self.env = d['environment']
+
+        exp = MLExpDesc(desc)
+        key = '{name}/{algorithm}/{env}/{params}/{run}'
 
         got = exp.interpolateSavePath(0, key=key)
         expected = 'test/q/mountaincar/alpha-0.01_epsilon-0.05/0'

@@ -55,7 +55,7 @@ class ExperimentDescription:
             'run': str(run),
             'name': self._d.get('name', 'unnamed')
         }
-        d = merge(self._d, special_keys)
+        d = merge(self.__dict__, special_keys)
 
         return interpolate(key, d)
 
