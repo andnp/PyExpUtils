@@ -47,11 +47,16 @@ cd {cwd}
     '''
 
 def schedule(slurm, executable, tasks):
-    parallel = buildParallel({
+    maybe_parallel = buildParallel({
         'executable': f'srun -N1 -n1 {executable}',
         'tasks': tasks,
         'cores': slurm.tasks,
     })
+
+    if maybe_parallel.empty():
+        return
+
+    parallel = maybe_parallel.insist()
 
     slurm_str = _slurmFile(slurm, parallel)
     with open('auto_slurm.sh', 'w') as f:
