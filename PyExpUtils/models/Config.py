@@ -8,6 +8,7 @@ class Config:
 
         self.save_path = d['save_path']
         self.log_path = d.get('log_path', '.logs')
+        self.experiment_directory = d.get('experiment_directory', 'experiments')
 
 @once
 def getConfig():

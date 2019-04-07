@@ -1,0 +1,8 @@
+{
+    "algorithm": "sdl",
+    "dataset": "cifar10",
+    "samples": 1000,
+    "metaParameters": {
+        "hiddenUnits": [10, 100, 1000]
+    }
+}

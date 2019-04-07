@@ -1,0 +1,12 @@
+{
+    "algorithm": "ann",
+    "dataset": "cifar10",
+    "samples": 1000,
+    "metaParameters": {
+        "layers": [
+            { "units": [10, 100, 1000], "type": "dense", "transfer": "relu" },
+            { "units": 32, "type": "dense", "transfer": "softmax" }
+        ],
+        "useDictionary": false
+    }
+}

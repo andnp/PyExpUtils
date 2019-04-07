@@ -1,3 +1,4 @@
 {
-    "save_path": "tmp/{agent}/{environment}/{params}/{run}"
+    "save_path": "tmp/{agent}/{environment}/{params}/{run}",
+    "experiment_directory": "mock_repo/experiments"
 }

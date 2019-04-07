@@ -1,5 +1,6 @@
 import unittest
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+import os
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
 
 class TestSavingPath(unittest.TestCase):
     def test_path(self):
@@ -115,4 +116,29 @@ class TestPermutations(unittest.TestCase):
         exp._d['metaParameters']['alpha'] = [0.01, 0.02]
         got = exp.permutations()
         expected = 3
+        self.assertEqual(got, expected)
+
+class TestExperimentName(unittest.TestCase):
+    def test_fromFile(self):
+        exp = loadExperiment('mock_repo/experiments/overfit/best/ann.json')
+
+        got = exp.getExperimentName()
+        expected = 'overfit/best'
+
+        self.assertEqual(got, expected)
+
+    def test_withCWD(self):
+        exp = loadExperiment(f'{os.getcwd()}/mock_repo/experiments/overfit/best/ann.json')
+
+        got = exp.getExperimentName()
+        expected = 'overfit/best'
+
+        self.assertEqual(got, expected)
+
+    def test_withDotSlash(self):
+        exp = loadExperiment('./mock_repo/experiments/overfit/best/ann.json')
+
+        got = exp.getExperimentName()
+        expected = 'overfit/best'
+
         self.assertEqual(got, expected)
