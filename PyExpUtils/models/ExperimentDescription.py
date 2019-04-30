@@ -5,13 +5,18 @@ from PyExpUtils.utils.dict import merge, hyphenatedStringify, pick
 from PyExpUtils.utils.fp import memoize
 from PyExpUtils.utils.str import interpolate
 from PyExpUtils.models.Config import getConfig
+from PyExpUtils.FileSystemContext import FileSystemContext
 
 class ExperimentDescription:
     def __init__(self, d, path=None, keys='metaParameters'):
+        # the raw serialized json
         self._d = d
+        # a collection of keys to permute over
         self.keys = keys
+        # path to the experiment description file
         self.path = path
 
+    # get the keys to permute over
     def _getKeys(self, keys):
         keys = keys if keys is not None else self.keys
         return keys if isinstance(keys, list) else [keys]
@@ -75,6 +80,10 @@ class ExperimentDescription:
         d = merge(self.__dict__, special_keys)
 
         return interpolate(key, d)
+
+    def buildSaveContext(self, idx, base='', use_tmp=False, permute='metaParameters', key = None):
+        path = self.interpolateSavePath(idx, permute, key)
+        return FileSystemContext(path, base, use_tmp)
 
 def loadExperiment(path, Model=ExperimentDescription):
     with open(path, 'r') as f:
