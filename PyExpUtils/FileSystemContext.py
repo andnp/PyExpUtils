@@ -64,7 +64,7 @@ class FileSystemContext:
         archive = self._path.split('/')[0] + '.tar' if to is None else to
 
         with tarfile.open(archive, 'a') as tar:
-            tar.add(files, files.replace(self._base + '/', ''), True)
+            tar.add(files, arcname = files.replace(self.getBase() + '/', ''), recursive = True)
 
         return archive
 
