@@ -3,6 +3,26 @@ import time
 import shutil
 import tarfile
 
+def removeFirstAndLastSlash(s):
+    if s.startswith('/'):
+        s = s[1:]
+
+    if s.endswith('/'):
+        s = s[:-1]
+
+    return s
+
+def join(*argv):
+    not_empty = filter(lambda s: s != '', argv)
+    no_slashes = map(removeFirstAndLastSlash, not_empty)
+
+    path = '/'.join(no_slashes)
+
+    if argv[0].startswith('/'):
+        path = '/' + path
+
+    return path
+
 class FileSystemContext:
     def __init__(self, path, base = '', use_tmp = False):
         self._path = path
@@ -16,12 +36,12 @@ class FileSystemContext:
 
     def getBase(self):
         if self._use_tmp:
-            return f'{self._base}/{self._tmp_dir}'
+            return join(self._base, self._tmp_dir)
 
-        return f'{self._base}'
+        return self._base
 
     def resolve(self, path = ''):
-        base = self.getBase() + '/' + self._path
+        base = join(self.getBase(), self._path)
 
         path = path.replace(base + '/', '')
 
@@ -33,7 +53,7 @@ class FileSystemContext:
         if path == '':
             return base
 
-        return f'{base}/{path}'
+        return join(base, path)
 
     def ensureExists(self, path = ''):
         path = self.resolve(path)

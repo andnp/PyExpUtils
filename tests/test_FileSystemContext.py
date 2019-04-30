@@ -79,3 +79,12 @@ class TestFileSystemContext(unittest.TestCase):
 
         ctx.remove()
         self.assertFalse(os.path.isfile(f'{ctx.getBase()}/path/to/results/test.txt'))
+
+class TestRegressions(unittest.TestCase):
+    def test_resolveNoBase(self):
+        ctx = FileSystemContext('path/to/results')
+
+        got = ctx.resolve('test.txt')
+        expected = 'path/to/results/test.txt'
+
+        self.assertEqual(got, expected)
