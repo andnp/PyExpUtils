@@ -1,4 +1,6 @@
 import os
+from PyExpUtils.utils.path import rest
+from PyExpUtils.utils.archive import getArchiveName, inArchive
 
 def listResultsPaths(exp, runs=1):
     perms = exp.permutations()
@@ -8,5 +10,6 @@ def listResultsPaths(exp, runs=1):
 
 def listMissingResults(exp, runs=1):
     for path in listResultsPaths(exp, runs):
-        if not os.path.exists(path):
+        archive = getArchiveName(path)
+        if not os.path.exists(path) and not inArchive(archive, rest(path)):
             yield path

@@ -1,3 +1,5 @@
+import functools
+
 def memoize(f):
     cache = {}
     def cacheKey(*args, **kwargs):
@@ -8,6 +10,7 @@ def memoize(f):
             s = s + '__' + str(arg) + '-' + str(kwargs[arg])
         return s
 
+    @functools.wraps(f)
     def wrapped(*args, **kwargs):
         nonlocal cache
         nonlocal cacheKey
