@@ -75,6 +75,7 @@ class TestPaths(unittest.TestCase):
         self.assertListEqual(got, expected)
 
     def test_listMissingResults_archive(self):
+        key = '.tmp_test_listMissingResults_archive/{agent}/{environment}/{params}/{run}'
         exp = RLExperiment({
             'agent': 'test_listMissingResults_archive',
             'environment': 'gridworld',
@@ -91,20 +92,21 @@ class TestPaths(unittest.TestCase):
             'test_listMissingResults_archive/gridworld/alpha-0.02_lambda-1.0/0', # 2
         ]
 
-        with tarfile.open('.tmp.tar', 'a') as tar:
+        with tarfile.open('.tmp_test_listMissingResults_archive.tar', 'a') as tar:
             for path in mock_data:
                 os.makedirs(path, exist_ok=True)
                 tar.add(path)
 
             shutil.rmtree('test_listMissingResults_archive')
 
-        got = list(listMissingResults(exp, 2))
+        got = list(listMissingResults(exp, 2, key=key))
         expected = [
-            '.tmp/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/0',
-            '.tmp/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-1.0/1',
-            '.tmp/test_listMissingResults_archive/gridworld/alpha-0.01_lambda-0.99/1',
-            '.tmp/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/1',
+            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/0',
+            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-1.0/1',
+            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.01_lambda-0.99/1',
+            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/1',
         ]
 
 
         self.assertListEqual(got, expected)
+        os.remove('.tmp_test_listMissingResults_archive.tar')
