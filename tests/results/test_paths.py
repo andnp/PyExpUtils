@@ -77,7 +77,7 @@ class TestPaths(unittest.TestCase):
     def test_listMissingResults_archive(self):
         key = '.tmp_test_listMissingResults_archive/{agent}/{environment}/{params}/{run}'
         exp = RLExperiment({
-            'agent': 'test_listMissingResults_archive',
+            'agent': 'test',
             'environment': 'gridworld',
             'metaParameters': {
                 'alpha': [0.01, 0.02],
@@ -86,10 +86,10 @@ class TestPaths(unittest.TestCase):
         })
 
         mock_data = [
-            'test_listMissingResults_archive/gridworld/alpha-0.01_lambda-1.0/0', # 0
-            'test_listMissingResults_archive/gridworld/alpha-0.01_lambda-1.0/1', # 4
-            'test_listMissingResults_archive/gridworld/alpha-0.01_lambda-0.99/0', # 1
-            'test_listMissingResults_archive/gridworld/alpha-0.02_lambda-1.0/0', # 2
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.01_lambda-1.0/1', # 4
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.01_lambda-1.0/0', # 0
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.01_lambda-0.99/0', # 1
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.02_lambda-1.0/0', # 2
         ]
 
         with tarfile.open('.tmp_test_listMissingResults_archive.tar', 'a') as tar:
@@ -97,14 +97,14 @@ class TestPaths(unittest.TestCase):
                 os.makedirs(path, exist_ok=True)
                 tar.add(path)
 
-            shutil.rmtree('test_listMissingResults_archive')
+            shutil.rmtree('.tmp_test_listMissingResults_archive/test')
 
         got = list(listMissingResults(exp, 2, key=key))
         expected = [
-            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/0',
-            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-1.0/1',
-            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.01_lambda-0.99/1',
-            '.tmp_test_listMissingResults_archive/test_listMissingResults_archive/gridworld/alpha-0.02_lambda-0.99/1',
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.02_lambda-0.99/0',
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.02_lambda-1.0/1',
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.01_lambda-0.99/1',
+            '.tmp_test_listMissingResults_archive/test/gridworld/alpha-0.02_lambda-0.99/1',
         ]
 
 

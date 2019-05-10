@@ -69,10 +69,10 @@ class TestIndices(unittest.TestCase):
         })
 
         mock_data = [
-            'test_archive/gridworld/alpha-0.01_lambda-1.0/0', # 0
-            'test_archive/gridworld/alpha-0.01_lambda-1.0/1', # 4
-            'test_archive/gridworld/alpha-0.01_lambda-0.99/0', # 1
-            'test_archive/gridworld/alpha-0.02_lambda-1.0/0', # 2
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/0', # 0
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/1', # 4
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-0.99/0', # 1
+            '.tmp/test_archive/gridworld/alpha-0.02_lambda-1.0/0', # 2
         ]
 
         with tarfile.open('.tmp.tar', 'a') as tar:
@@ -80,7 +80,7 @@ class TestIndices(unittest.TestCase):
                 os.makedirs(path, exist_ok=True)
                 tar.add(path)
 
-            shutil.rmtree('test_archive')
+            shutil.rmtree('.tmp/test_archive')
 
         got = list(listMissingResults(exp, 2))
         expected = [3, 5, 6, 7]

@@ -11,5 +11,5 @@ def listResultsPaths(exp, runs=1, key=None):
 def listMissingResults(exp, runs=1, key=None):
     for path in listResultsPaths(exp, runs, key):
         archive = getArchiveName(path)
-        if not os.path.exists(path) and not inArchive(archive, rest(path)):
+        if not os.path.exists(path) and not inArchive(archive, path):
             yield path
