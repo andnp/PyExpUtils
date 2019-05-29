@@ -1,7 +1,6 @@
 import functools
 
-def memoize(f):
-    cache = {}
+def memoize(f, cache={}):
     def cacheKey(*args, **kwargs):
         s = ''
         for arg in args:
@@ -25,10 +24,25 @@ def memoize(f):
 
 class memoize_method:
     def __init__(self, f):
-        self.func = memoize(f)
+        self.func = f
 
     def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+        # get the "self" argument from the class method
+        obj = args[0]
+
+        name = self.func.__name__
+
+        try:
+            cache = obj.__memoized_funcs
+        except:
+            cache = obj.__memoized_funcs = {}
+
+        try:
+            f = cache[name]
+        except:
+            f = cache[name] = memoize(self.func)
+
+        return f(*args, **kwargs)
 
     def __get__(self, instance, owner):
         return functools.partial(self.__call__, instance)

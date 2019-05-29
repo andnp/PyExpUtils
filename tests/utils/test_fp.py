@@ -1,5 +1,5 @@
 import unittest
-from PyExpUtils.utils.fp import Maybe
+from PyExpUtils.utils.fp import Maybe, memoize_method
 
 class TestMaybe(unittest.TestCase):
     def test_map(self):
@@ -43,3 +43,24 @@ class TestMaybe(unittest.TestCase):
         maybe = Maybe.none()
         with self.assertRaises(AssertionError):
             got = maybe.insist()
+
+class RegressionTests(unittest.TestCase):
+    def test_memoize(self):
+        built = 0
+        class Thing:
+            def __init__(self):
+                nonlocal built
+                built += 1
+                self.x = built
+
+            @memoize_method
+            def get(self):
+                self.x += 1
+                return self.x
+
+        thing1 = Thing()
+        self.assertEqual(thing1.get(), 2)
+        self.assertEqual(thing1.get(), 2)
+
+        thing2 = Thing()
+        self.assertEqual(thing2.get(), 3)
