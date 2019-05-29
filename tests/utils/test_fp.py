@@ -64,3 +64,21 @@ class RegressionTests(unittest.TestCase):
 
         thing2 = Thing()
         self.assertEqual(thing2.get(), 3)
+
+    def test_memoize_with_args(self):
+        class Thing:
+            @memoize_method
+            def get(self, a, b):
+                return a + b
+
+            @memoize_method
+            def getWithKey(self, a, b = 1):
+                return a + b
+
+        thing1 = Thing()
+
+        self.assertEqual(thing1.get(1, 2), 3)
+        self.assertEqual(thing1.get(1, 2), 3)
+
+        self.assertEqual(thing1.getWithKey(1), 2)
+        self.assertEqual(thing1.getWithKey(1, 2), 3)
