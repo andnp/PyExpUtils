@@ -2,7 +2,7 @@ import json
 import os
 from PyExpUtils.utils.permute import getParameterPermutation, getNumberOfPermutations
 from PyExpUtils.utils.dict import merge, hyphenatedStringify, pick
-from PyExpUtils.utils.fp import memoize
+from PyExpUtils.utils.fp import memoize_method
 from PyExpUtils.utils.str import interpolate
 from PyExpUtils.models.Config import getConfig
 from PyExpUtils.FileSystemContext import FileSystemContext
@@ -37,17 +37,17 @@ class ExperimentDescription:
 
         return Model(d) if Model else d
 
-    @memoize
+    @memoize_method
     def permutations(self, keys='metaParameters'):
         sweeps = self.permutable(keys)
         return getNumberOfPermutations(sweeps)
 
-    @memoize
+    @memoize_method
     def getRun(self, idx, keys='metaParameters'):
         count = self.permutations(keys)
         return idx // count
 
-    @memoize
+    @memoize_method
     def getExperimentName(self):
         cwd = os.getcwd()
         exp_dir = getConfig().experiment_directory

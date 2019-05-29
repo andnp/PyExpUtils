@@ -23,6 +23,16 @@ def memoize(f):
 
     return wrapped
 
+class memoize_method:
+    def __init__(self, f):
+        self.func = memoize(f)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def __get__(self, instance, owner):
+        return functools.partial(self.__call__, instance)
+
 def once(f):
     called = False
     ret = None
