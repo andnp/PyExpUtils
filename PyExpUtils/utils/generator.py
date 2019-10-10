@@ -1,3 +1,5 @@
+import numpy as np
+
 # takes a generator and a number of items to group together
 # returns a generator that yields `num` items in groups
 # example:
@@ -16,3 +18,7 @@ def group(gen, num):
     if len(coll) > 0:
         yield coll
         coll = []
+
+def windowAverage(arr, window):
+    for g in group(arr, window):
+        yield np.mean(g)
