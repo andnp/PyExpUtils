@@ -16,7 +16,7 @@ class ExperimentDescription:
         self.path = path
 
     # get the keys to permute over
-    def _getKeys(self, keys):
+    def _getKeys(self, keys = None):
         keys = keys if keys is not None else self.keys
         return keys if isinstance(keys, list) else [keys]
 
