@@ -17,11 +17,13 @@ def buildParallel(d):
 
     # optional
     delay = d.get('delay')
+    sshloginfile = d.get('sshloginfile')
 
     # build parameter pairs
     pairs = [
         ('-j', cores),
-        ('--delay', delay)
+        ('--delay', delay),
+        ('--sshloginfile', sshloginfile),
     ]
 
     # build parallel options
