@@ -39,15 +39,16 @@ def slurmOptionsFromFile(path):
 
     return SlurmOptions(d)
 
-def _slurmFile(slurm, parallel, preamble):
+def _slurmFile(slurm, parallel, preamble, postamble):
     cwd = os.getcwd()
     return f'''#!/bin/bash
 {preamble}
 cd {cwd}
 {parallel}
+{postamble}
     '''
 
-def schedule(slurm, executable, tasks, preamble='', debug=False):
+def schedule(slurm, executable, tasks, preamble='', postamble='', debug=False):
     maybe_parallel = buildParallel({
         'executable': f'srun -N1 -n1 {executable}',
         'tasks': tasks,
@@ -59,7 +60,7 @@ def schedule(slurm, executable, tasks, preamble='', debug=False):
 
     parallel = maybe_parallel.insist()
 
-    slurm_str = _slurmFile(slurm, parallel, preamble)
+    slurm_str = _slurmFile(slurm, parallel, preamble, postamble)
 
     if debug:
         print("Would schedule this bash script:")
