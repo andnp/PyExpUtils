@@ -4,7 +4,7 @@ from PyExpUtils.utils.fp import once
 """doc
 Experiment utility configuration file.
 Specifies global configuration settings:
- - *save_path*: directory where experimental results will be stored
+ - *save_path*: directory format where experimental results will be stored
  - *log_path*: directory where log files will be saved (e.g. stacktraces during experiments)
  - *experiment_directory*: root directory where all of the experiment description files are located
 
@@ -21,7 +21,7 @@ config.json
 An example configuration file:
 ```json
 {
-    "save_path": "results",
+    "save_path": "results/{name}/{environment}/{agent}/{params}",
     "log_path": "~/scratch/.logs",
     "experiment_directory": "experiments"
 }
