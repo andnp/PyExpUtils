@@ -117,7 +117,7 @@ for module in MODULES:
         if len(docs):
             doc_str += f"### {path}\n"
         for method in docs:
-            doc_str += f"*{method}*:\n"
+            doc_str += f"**{method}**:\n"
             doc_str += '\n'.join(docs[method]) + '\n\n'
         f.close()
 

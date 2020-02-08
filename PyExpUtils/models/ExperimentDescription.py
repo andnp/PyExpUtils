@@ -1,5 +1,6 @@
 import json
 import os
+import PyExpUtils.utils.path as Path
 from PyExpUtils.utils.permute import getParameterPermutation, getNumberOfPermutations
 from PyExpUtils.utils.dict import merge, hyphenatedStringify, pick
 from PyExpUtils.utils.str import interpolate
@@ -36,12 +37,12 @@ class ExperimentDescription:
 
         return Model(d) if Model else d
 
-    def permutations(self, keys='metaParameters'):
+    def numPermutations(self, keys='metaParameters'):
         sweeps = self.permutable(keys)
         return getNumberOfPermutations(sweeps)
 
     def getRun(self, idx, keys='metaParameters'):
-        count = self.permutations(keys)
+        count = self.numPermutations(keys)
         return idx // count
 
     def getExperimentName(self):
@@ -56,7 +57,7 @@ class ExperimentDescription:
             .replace(exp_dir + '/', '') \
             .replace('./', '')
 
-        return '/'.join(path.split('/')[:-1])
+        return Path.up(path)
 
     def interpolateSavePath(self, idx, permute='metaParameters', key = None):
         if key is None:

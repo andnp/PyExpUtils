@@ -3,7 +3,7 @@ from PyExpUtils.utils.archive import getArchiveName, inArchive
 from PyExpUtils.results.paths import listResultsPaths
 
 def listIndices(exp, runs=1):
-    perms = exp.permutations()
+    perms = exp.numPermutations()
     tasks = perms * runs
     return range(tasks)
 

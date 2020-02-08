@@ -29,73 +29,59 @@ To run each permutation once, simply execute indices `i \in [0..8]`.
 To run each permutation twice, multiply by 2: `i \in [0..17]`.
 In general for `n` runs and `p` permutations: `i \in [0..(n*p - 1)]`.
 
-### API
-#### models/ExperimentDescription
-De-serializes the experiment description json files.
-Holds a few utility functions for working with these datafiles.
 
-This should be extended by a subclass that knows the exact fields in your datafile.
-This class makes no strong assumptions about the datafile structure, though defaults to assuming that the meta-parameters are contained in a field called `metaParameters`.
+## models
+A collection of JSON serialization classes with associated utility methods.
+### PyExpUtils/models/Config.py
+*Config:*:
+Experiment utility configuration file.
+Specifies global configuration settings:
+- *save_path*: directory where experimental results will be stored
+- *log_path*: directory where log files will be saved (e.g. stacktraces during experiments)
+- *experiment_directory*: root directory where all of the experiment description files are located
 
-```python
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
-
-class Experiment(ExperimentDescription):
-    # takes a dictionary (raw json file)
-    # and the path to that json file
-    def __init__(self, d, path):
-        super().__init__(d, path)
-        # require the json file to specify an agent name
-        self.agent = d['agent']
-        # optionally check if the json file specifies the number of steps
-        self.steps = d.get('steps', 1000)
-
-def loadExperiment(path):
-    with open(path, 'r') as f:
-        d = json.load(f)
-
-    return Experiment(d, path)
+The config file should be at the root level of the repository and should be named `config.json`.
+```
+.git
+.gitignore
+tests/
+scripts/
+src/
+config.json
 ```
 
-**getPermutation**: gets the parameter permutation for a single index.
-```python
-exp = loadExperiment(sys.argv[1])
-permutation = exp.getPermutation(0)
-# permutation is a raw dictionary exactly the same as `d` above
-# except `metaParameters` has been replaced with single values (instead of sweeps)
+An example configuration file:
+```json
+{
+"save_path": "results",
+"log_path": "~/scratch/.logs",
+"experiment_directory": "experiments"
+}
 ```
 
-**permutations**: gets the number of possible permutations for given datafile.
+*getConfig*:
+Memoized global configuration loader.
+Will read `config.json` from (only once) and return a Config object.
 ```python
-exp = loadExperiment(sys.argv[1])
-num_permutations = exp.permutations()
+config = getConfig()
+print(config.save_path) # -> 'results'
 ```
 
-**getRun**: returns the run number for a given index.
-This is based on the number of permutations and the index value.
+## runner
+### PyExpUtils/runner/Slurm.py
+*hours*:
+Takes an integer number of hours and returns a well-formated time string.
 ```python
-run_num = exp.getRun(idx=22)
-# if there are 10 permutations, this would return run_num=3
+time = hours(3)
+print(time) # -> '2:59:59
 ```
 
-**interpolateSavePath**: takes a save path "key" and builds a path based on experiment meta-data.
+*gigs*:
+Takes an integer number of gigabytes and returns a well-formated memory string.
 ```python
-# values in {} will be replaced based on experiment description
-path_key = 'results/{name}/{algorithm}/{dataset}/{params}/{run}'
-save_path = exp.interpolateSavePath(idx=0)
-
-print(save_path) # results/overfit/ann/fashion_mnist/alpha-0.01_epsilon-0.01/0
+memory = gigs(4)
+print(memory) # -> '4G'
 ```
 
-#### results/paths
-**listResultsPaths**: takes an experiment description and returns an iterable of each result path for each meta-parameter permutation and each run.
-```python
-for path in listResultsPaths(exp, runs = 10):
-    print(path) # results/overfit/ann/fashion_mnist/alpha-0.01_epsilon-0.01/0
-```
-
-**listMissingResults**: takes an experiment description and returns an iterable of all of the missing results. This is extremely useful for running experiments on a cluster where jobs may time out, or nodes may fail due to environmental issues. This allows rerunning of only the failed experiments.
-```python
-for path in listMissingResults(exp, runs=10):
-    print(path) # results/overfit/ann/fashion_mnist/alpha-0.02_epsilon-0.01/8
-```
+## results
+## utils

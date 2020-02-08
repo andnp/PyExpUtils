@@ -23,7 +23,7 @@ def removeFirstAndLastSlash(s):
     return s
 
 def join(*argv):
-    if isinstance(argv[0], Iterable):
+    if isinstance(argv[0], Iterable) and type(argv[0]) is not str:
         argv = argv[0]
 
     not_empty = filter(lambda s: s != '', argv)

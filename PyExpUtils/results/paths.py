@@ -3,7 +3,7 @@ from PyExpUtils.utils.path import rest
 from PyExpUtils.utils.archive import getArchiveName, inArchive
 
 def listResultsPaths(exp, runs=1, key=None):
-    perms = exp.permutations()
+    perms = exp.numPermutations()
     tasks = perms * runs
     for i in range(tasks):
         yield exp.interpolateSavePath(i, key=key)
