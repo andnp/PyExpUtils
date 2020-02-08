@@ -10,7 +10,6 @@ class Result:
         self.idx = idx
         self.params = exp.getPermutation(idx)[exp._getKeys()[0]]
         self._data = None
-        self._reducer = lambda m: m
 
     def _lazyLoad(self):
         if self._data is not None:
@@ -24,17 +23,36 @@ class Result:
             return (np.NaN, np.NaN, 0)
 
     def reducer(self, lm):
+        view = ResultView(self)
+        view.reducer(lm)
+        return view
+
+    def mean(self):
+        return self._lazyLoad()[0]
+
+    def stderr(self):
+        return self._lazyLoad()[1]
+
+    def runs(self):
+        return self._lazyLoad()[2]
+
+class ResultView:
+    def __init__(self, result):
+        self._result = result
+        self._reducer = lambda m: m
+
+    def reducer(self, lm):
         self._reducer = lm
         return self
 
     def mean(self):
-        return self._reducer(self._lazyLoad()[0])
+        return self._reducer(self._result.mean())
 
     def stderr(self):
-        return self._reducer(self._lazyLoad()[1])
+        return self._reducer(self._result.stderr())
 
     def runs(self):
-        return self._reducer(self._lazyLoad()[2])
+        return self._reducer(self._result.runs())
 
 def splitOverParameter(results, param):
     parts = {}

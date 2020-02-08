@@ -77,9 +77,9 @@ class ExperimentDescription:
 
         return interpolate(key, d)
 
-    def buildSaveContext(self, idx, base='', use_tmp=False, permute='metaParameters', key = None):
+    def buildSaveContext(self, idx, base='', permute='metaParameters', key = None):
         path = self.interpolateSavePath(idx, permute, key)
-        return FileSystemContext(path, base, use_tmp)
+        return FileSystemContext(path, base)
 
 def loadExperiment(path, Model=ExperimentDescription):
     with open(path, 'r') as f:
