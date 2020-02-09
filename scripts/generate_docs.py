@@ -42,10 +42,12 @@ def getName(line):
     line = line.replace('def ', '')
     line = line.replace('class ', '')
     line = re.sub(r'\W*\(.*\).*:*', '', line)
+    line = line.replace(':', '')
     return line
 
 def scanFile(f):
     in_doc = False
+    tabs = 0
     get_method = False
     buffer = []
     total = {}
@@ -56,11 +58,13 @@ def scanFile(f):
             get_method = False
             name = getName(line)
             total[name] = buffer
+            tabs = 0
             buffer = []
             continue
 
         if not in_doc and '"""doc' in line:
             in_doc = True
+            tabs = len(re.match(r'\W*', line)[0]) - 3
             continue
 
         if not in_doc:
@@ -71,7 +75,7 @@ def scanFile(f):
             get_method = True
             continue
 
-        line = line.strip()
+        line = line[tabs:]
         buffer.append(line)
 
     return total
@@ -117,8 +121,8 @@ for module in MODULES:
         if len(docs):
             doc_str += f"### {path}\n"
         for method in docs:
-            doc_str += f"**{method}**:\n"
-            doc_str += '\n'.join(docs[method]) + '\n\n'
+            doc_str += f"**{method}**:\n\n"
+            doc_str += ''.join(docs[method]) + '\n\n'
         f.close()
 
 with open('README.md', 'w') as f:
