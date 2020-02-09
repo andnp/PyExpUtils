@@ -7,7 +7,7 @@ setup(
     author_email='andnpatterson@gmail.com',
     packages=find_packages(exclude=['tests*']),
     install_requires=[],
-    version=0.20,
+    version=1.0,
     license='MIT',
     description='A small set of utilities for RL and ML experiments',
     long_description='todo',
