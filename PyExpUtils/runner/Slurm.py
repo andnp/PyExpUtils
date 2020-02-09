@@ -1,15 +1,29 @@
 import os
 import json
-from PyExpUtils.runner.parallel import buildParallel
+import PyExpUtils.runner.parallel as Parallel
 from PyExpUtils.results.indices import listMissingResults, listIndices
 
+"""doc
+Takes an integer number of hours and returns a well-formated time string.
+```python
+time = hours(3)
+print(time) # -> '2:59:59
+```
+"""
 def hours(n):
-    return f'{n-1}:59:00'
+    return f'{n-1}:59:59'
 
+"""doc
+Takes an integer number of gigabytes and returns a well-formated memory string.
+```python
+memory = gigs(4)
+print(memory) # -> '4G'
+```
+"""
 def gigs(n):
     return f'{n}G'
 
-class SlurmOptions:
+class Options:
     def __init__(self, d):
         self.account = d['account']
         self.time = d['time']
@@ -17,7 +31,7 @@ class SlurmOptions:
         self.memPerCpu = d['memPerCpu']
         self.tasksPerNode = d['tasksPerNode']
 
-        self.output = d.get('output', '$SCRATCH/job_output_\%j.txt')
+        self.output = d.get('output', '$SCRATCH/job_output_%j.txt')
         self.emailType = d.get('emailType')
         self.email = d.get('email')
 
@@ -33,42 +47,30 @@ class SlurmOptions:
         if self.email is not None: args.append(f'--main-user={self.email}')
         return ' '.join(args)
 
-def slurmOptionsFromFile(path):
+def fromFile(path):
     with open(path, 'r') as f:
         d = json.load(f)
 
-    return SlurmOptions(d)
+    return Options(d)
 
-def _slurmFile(slurm, parallel, preamble, postamble):
-    cwd = os.getcwd()
-    return f'''#!/bin/bash
-{preamble}
-cd {cwd}
-{parallel}
-{postamble}
-    '''
-
-def schedule(slurm, executable, tasks, preamble='', postamble='', debug=False):
-    maybe_parallel = buildParallel({
-        'executable': f'srun -N1 -n1 {executable}',
+def buildParallel(executable, tasks, opts={}):
+    nodes = opts.get('nodes-per-process', 1)
+    threads = opts.get('threads-per-process', 1)
+    return Parallel.buildParallel({
+        'executable': f'srun -N{nodes} -n{threads} {executable}',
         'tasks': tasks,
-        'cores': slurm.tasks,
+        'cores': opts['ntasks']
     })
 
-    if maybe_parallel.empty():
-        return
+def schedule(script, opts=None, script_name='auto_slurm.sh', cleanup=True):
+    with open(script_name, 'w') as f:
+        f.write(script)
 
-    parallel = maybe_parallel.insist()
+    cmdArgs = ''
+    if opts is None:
+        cmdArgs = opts.cmdArgs()
 
-    slurm_str = _slurmFile(slurm, parallel, preamble, postamble)
+    os.system(f'sbatch {cmdArgs} {script_name}')
 
-    if debug:
-        print("Would schedule this bash script:")
-        print(slurm_str)
-        return
-
-    with open('auto_slurm.sh', 'w') as f:
-        f.write(slurm_str)
-
-    os.system(f'sbatch {slurm.cmdArgs()} auto_slurm.sh')
-    os.remove('auto_slurm.sh')
+    if cleanup:
+        os.remove(script_name)

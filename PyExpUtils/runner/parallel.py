@@ -1,5 +1,3 @@
-from PyExpUtils.utils.fp import Maybe
-
 def flagString(pairs):
     for pair in pairs:
         key, value = pair
@@ -30,6 +28,6 @@ def buildParallel(d):
     ops = ' '.join(flagString(pairs))
 
     if len(tasks) == 0:
-        return Maybe.none()
+        return None
 
-    return Maybe.some(f'parallel {ops} {ex} ::: {tasks}')
+    return f'parallel {ops} {ex} ::: {tasks}'

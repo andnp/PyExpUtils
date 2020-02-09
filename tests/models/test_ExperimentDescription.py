@@ -98,25 +98,19 @@ class TestPermutations(unittest.TestCase):
         exp = ExperimentDescription(desc)
 
         # compute number of permutations first time
-        got = exp.permutations()
+        got = exp.numPermutations()
         expected = 3
         self.assertEqual(got, expected)
 
         # recompute if the keys are different
-        got = exp.permutations(keys='envParameters')
+        got = exp.numPermutations(keys='envParameters')
         expected = 2
         self.assertEqual(got, expected)
 
         # recompute if keys is array
-        got = exp.permutations(keys=['metaParameters', 'envParameters'])
+        got = exp.numPermutations(keys=['metaParameters', 'envParameters'])
         expected = 6
         self.assertEqual(got, expected)
-
-        # don't recompute because things shouldn't ever change
-        exp._d['metaParameters']['alpha'] = [0.01, 0.02]
-        got = exp.permutations()
-        expected = 3
-        # self.assertEqual(got, expected)
 
 class TestExperimentName(unittest.TestCase):
     def test_fromFile(self):
