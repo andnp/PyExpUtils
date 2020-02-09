@@ -64,6 +64,7 @@ def scanFile(f):
 
         if not in_doc and '"""doc' in line:
             in_doc = True
+            # count the number of whitespaces to offset all lines in docs by
             tabs = len(re.match(r'\W*', line)[0]) - 3
             continue
 
