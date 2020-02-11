@@ -162,13 +162,13 @@ print(best.params) # -> { 'alpha': 0.25, 'lambda': 1.0 }
 def getBest(results, steps=None, percent=1.0, comparator=lambda a, b: a < b):
     low = first(results)
     if steps is None:
-        steps = low.mean().shape[0]
+        steps = low.load().shape[0]
 
     steps = int(steps * percent)
 
     for r in results:
-        a = r.mean()
-        b = low.mean()
+        a = r.load()
+        b = low.load()
         am = np.mean(a[0 - steps:])
         bm = np.mean(b[0 - steps:])
         if np.isnan(bm) or comparator(am, bm):
