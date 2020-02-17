@@ -67,7 +67,7 @@ def schedule(script, opts=None, script_name='auto_slurm.sh', cleanup=True):
         f.write(script)
 
     cmdArgs = ''
-    if opts is None:
+    if opts is not None:
         cmdArgs = opts.cmdArgs()
 
     os.system(f'sbatch {cmdArgs} {script_name}')
