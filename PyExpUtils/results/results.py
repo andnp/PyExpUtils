@@ -70,6 +70,14 @@ class Result:
     def load(self):
         return self._lazyLoad()
 
+    """doc
+    Get the mean value over multiple runs from a result file.
+    Defaults to assuming that results files are saved as `np.array([mean, stderr, runs])`.
+    For different results file formats, override this method with a custom `ResultView` class.
+    """
+    def mean(self):
+        return self.load()[0]
+
 """doc
 A "window" over a `Result` object that allows changing the type of reducer on the object while still referencing the same memory cache.
 Useful for applying different views at the same results file without needing to load multiple copies of the result into memory or making multiple filesystem calls.
@@ -94,6 +102,9 @@ class ResultView:
 
     def load(self):
         return self._reducer(self._result.load())
+
+    def mean(self):
+        return self._reducer(self._result.mean())
 
 """doc
 Utility function for sorting results into bins based on values of a metaParameter.
@@ -162,13 +173,13 @@ print(best.params) # -> { 'alpha': 0.25, 'lambda': 1.0 }
 def getBest(results, steps=None, percent=1.0, comparator=lambda a, b: a < b):
     low = first(results)
     if steps is None:
-        steps = low.load().shape[0]
+        steps = low.mean().shape[0]
 
     steps = int(steps * percent)
 
     for r in results:
-        a = r.load()
-        b = low.load()
+        a = r.mean()
+        b = low.mean()
         am = np.mean(a[0 - steps:])
         bm = np.mean(b[0 - steps:])
         if np.isnan(bm) or comparator(am, bm):
