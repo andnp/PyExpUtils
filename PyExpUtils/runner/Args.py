@@ -1,15 +1,16 @@
 import sys
+from typing import Any, Dict
 
 class ArgsModel:
-    def __init__(self, args):
-        self.experiment_paths = args['experiment_paths']
-        self.runs = args['runs']
-        self.base_path = args['base_path']
-        self.executable = args['executable']
+    def __init__(self, args: Dict[str, Any]):
+        self.experiment_paths = str(args['experiment_paths'])
+        self.runs = int(args['runs'])
+        self.base_path = str(args['base_path'])
+        self.executable = str(args['executable'])
 
         # optional
-        self.retry = args.get('retry', False)
-        self.cpus = args.get('cpus', 1)
+        self.retry = bool(args.get('retry', False))
+        self.cpus = int(args.get('cpus', 1))
 
 def fromCommandLine():
     if len(sys.argv) < 5:

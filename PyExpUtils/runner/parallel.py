@@ -1,10 +1,16 @@
-def flagString(pairs):
-    for pair in pairs:
+from typing import Any, Dict, Optional, Sequence, Tuple
+
+def flagString(pairs: Sequence[Tuple[str, Optional[Any]]]):
+    s = ''
+    for i, pair in enumerate(pairs):
         key, value = pair
         if value is not None:
-            yield f'{key} {str(value)}'
+            if i > 0: s += ' '
+            s += f'{key} {str(value)}'
 
-def buildParallel(d):
+    return s
+
+def build(d: Dict[str, Any]):
     # required
     ex = d['executable']
     cores = d['cores']
@@ -25,7 +31,7 @@ def buildParallel(d):
     ]
 
     # build parallel options
-    ops = ' '.join(flagString(pairs))
+    ops = flagString(pairs)
 
     if len(tasks) == 0:
         return None

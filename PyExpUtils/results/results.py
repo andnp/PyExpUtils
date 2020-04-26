@@ -1,4 +1,6 @@
 import numpy as np
+from typing import Any, Dict, List, Optional, Sequence, Iterator, Union
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
 from PyExpUtils.utils.dict import equal
@@ -23,19 +25,25 @@ for result in results:
 ```
 """
 class Result:
-    def __init__(self, path, exp, idx):
+    def __init__(self, path: str, exp: ExperimentDescription, idx: int):
         self.path = path
         self.exp = exp
         self.idx = idx
         self.params = exp.getPermutation(idx)[exp._getKeys()[0]]
-        self._data = None
+        self._data: Optional[Dict] = None
 
+    # internal method that should be overridden for accessing datafiles
+    def _load(self):
+        return np.load(self.path, allow_pickle=True)
+
+    # cache the data after loading once
+    # also fail semi-silently so that plotting scripts can continue even if results are missing
     def _lazyLoad(self):
         if self._data is not None:
             return self._data
 
         try:
-            self._data = np.load(self.path, allow_pickle=True)
+            self._data = self._load()
             return self._data
         except:
             print('Result not found :: ' + self.path)
@@ -54,7 +62,7 @@ class Result:
     results = getFirstNSteps(results, 100)
     ```
     """
-    def reducer(self, lm):
+    def reducer(self, lm: Any):
         view = ResultView(self)
         view.reducer(lm)
         return view
@@ -73,10 +81,18 @@ class Result:
     """doc
     Get the mean value over multiple runs from a result file.
     Defaults to assuming that results files are saved as `np.array([mean, stderr, runs])`.
-    For different results file formats, override this method with a custom `ResultView` class.
+    For different results file formats, override this method with a custom `Result` class.
     """
     def mean(self):
         return self.load()[0]
+
+    """doc
+    Get the standard error over multiple runs from a result file.
+    Defaults to assuming that results files are saved as `np.array([mean, stderr, runs])`.
+    For different results file formats, override this method with a custom `Result` class.
+    """
+    def stderr(self):
+        return self.load()[1]
 
 """doc
 A "window" over a `Result` object that allows changing the type of reducer on the object while still referencing the same memory cache.
@@ -92,11 +108,14 @@ for result in results:
 ```
 """
 class ResultView:
-    def __init__(self, result):
+    def __init__(self, result: Result):
         self._result = result
         self._reducer = lambda m: m
+        self.idx = result.idx
+        self.exp = result.exp
+        self.params = result.params
 
-    def reducer(self, lm):
+    def reducer(self, lm: Any):
         self._reducer = lm
         return self
 
@@ -105,6 +124,29 @@ class ResultView:
 
     def mean(self):
         return self._reducer(self._result.mean())
+
+    def stderr(self):
+        return self._reducer(self._result.stderr())
+
+DuckResult = Union[Result, ResultView]
+ResultList = Union[Sequence[DuckResult], Iterator[DuckResult]]
+
+"""doc
+Returns an iterator over all results that are expected to exist given a particular experiment.
+Takes the `ExperimentDescription` and the name of the result file.
+Does not load results from disk.
+
+```python
+results = loadResults(exp, 'returns.npy')
+
+for result in results:
+    print(result) # -> `<Result>`
+```
+"""
+def loadResults(exp: ExperimentDescription, result_file: str):
+    for i, path in enumerate(listResultsPaths(exp)):
+        summary_path = path + '/' + result_file
+        yield Result(summary_path, exp, i)
 
 """doc
 Utility function for sorting results into bins based on values of a metaParameter.
@@ -116,8 +158,8 @@ bins = splitOverParameter(results, 'alpha')
 print(bins) # -> { 1.0: [Result, Result, ...], 0.5: [Result, Result, ...], 0.25: [Result, Result, ...], ...}
 ```
 """
-def splitOverParameter(results, param):
-    parts = {}
+def splitOverParameter(results: ResultList, param: str):
+    parts: Dict[Any, List[DuckResult]] = {}
     for r in results:
         param_value = r.params[param]
 
@@ -141,10 +183,10 @@ slice = sliceOverParameter(results, result, 'lambda')
 print(slice) # => { 1.0: [Result, Result, ...], 0.99: [Result, Result, ...], 0.98: [Result, Result], ....}
 ```
 """
-def sliceOverParameter(results, slicer, param):
+def sliceOverParameter(results: ResultList, slicer: DuckResult, param: str):
     parts = splitOverParameter(results, param)
 
-    sl = {}
+    sl: Dict[str, Optional[DuckResult]] = {}
     for k in parts:
         sl[k] = find(parts[k], slicer, ignore=[param])
 
@@ -170,7 +212,7 @@ best = getBest(results)
 print(best.params) # -> { 'alpha': 0.25, 'lambda': 1.0 }
 ```
 """
-def getBest(results, steps=None, percent=1.0, comparator=lambda a, b: a < b):
+def getBest(results: ResultList, steps: Optional[int] = None, percent: float = 1.0, comparator=lambda a, b: a < b):
     low = first(results)
     if steps is None:
         steps = low.mean().shape[0]
@@ -203,7 +245,7 @@ print(result.params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
 print(match.params) # -> { 'alpha': 1.0, 'lambda': 0.98 }
 ```
 """
-def find(stream, other, ignore=[]):
+def find(stream: ResultList, other: DuckResult, ignore: List[str] = []):
     params = other.params
     for res in stream:
         if equal(params, res.params, ignore):
@@ -222,7 +264,7 @@ for res in results:
     print(res.params) # -> { 'alpha': 0.25, 'lambda': ... }
 ```
 """
-def whereParameterEquals(results, param, value):
+def whereParameterEquals(results: ResultList, param: str, value: Any):
     return filter(lambda r: r.params.get(param, value) == value, results)
 
 """doc
@@ -238,22 +280,5 @@ for res in results:
     print(res.params) # -> { 'alpha': 0.25, 'lambda': ... }, { 'alpha': 0.5, 'lambda': ... }, ...
 ```
 """
-def whereParameterGreaterEq(results, param, value):
+def whereParameterGreaterEq(results: ResultList, param: str, value: Any):
     return filter(lambda r: r.params.get(param, value) >= value, results)
-
-"""doc
-Returns an iterator over all results that are expected to exist given a particular experiment.
-Takes the `ExperimentDescription` and the name of the result file.
-Does not load results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-
-for result in results:
-    print(result) # -> `<Result>`
-```
-"""
-def loadResults(exp, result_file):
-    for i, path in enumerate(listResultsPaths(exp)):
-        summary_path = path + '/' + result_file
-        yield Result(summary_path, exp, i)

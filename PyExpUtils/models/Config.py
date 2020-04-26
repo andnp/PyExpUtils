@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from PyExpUtils.utils.fp import once
 
 """doc
@@ -32,9 +33,9 @@ class Config:
         with open('config.json', 'r') as f:
             d = json.load(f)
 
-        self.save_path = d['save_path']
-        self.log_path = d.get('log_path', '.logs')
-        self.experiment_directory = d.get('experiment_directory', 'experiments')
+        self.save_path: str = d['save_path']
+        self.log_path: str = d.get('log_path', '.logs')
+        self.experiment_directory: Optional[str] = d.get('experiment_directory', 'experiments')
 
 """doc
 Memoized global configuration loader.

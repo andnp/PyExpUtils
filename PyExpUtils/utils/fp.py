@@ -1,6 +1,7 @@
 import functools
+from typing import Any, Callable, Dict
 
-def memoize(f, cache={}):
+def memoize(f: Callable[[Any], Any], cache: Dict[Any, Any] = {}):
     def cacheKey(*args, **kwargs):
         s = ''
         for arg in args:
@@ -22,7 +23,7 @@ def memoize(f, cache={}):
 
     return wrapped
 
-def once(f):
+def once(f: Callable[[], Any]):
     called = False
     ret = None
     def wrapped(*args, **kwargs):

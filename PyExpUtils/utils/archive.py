@@ -2,10 +2,10 @@ import tarfile
 from PyExpUtils.utils.fp import memoize
 
 @memoize
-def openTar(archive):
+def openTar(archive: str):
     return tarfile.open(archive)
 
-def inArchive(archive, path):
+def inArchive(archive: str, path: str):
     exists = False
     # if there is no archive or the file isn't in the archive
     # then don't raise exception, just return false
@@ -18,6 +18,6 @@ def inArchive(archive, path):
 
     return exists
 
-def getArchiveName(path):
+def getArchiveName(path: str):
     archive = path.split('/')[0]
     return archive + '.tar'

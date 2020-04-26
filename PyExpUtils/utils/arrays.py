@@ -1,21 +1,23 @@
+from PyExpUtils.utils.types import ForAble, T
 from itertools import tee, filterfalse
+from typing import Callable, List, Sequence, Union, Iterator
 
-def fillRest(arr, val, length):
-    for i in range(len(arr), length):
+def fillRest(arr: List[T], val: T, length: int) -> List[T]:
+    for _ in range(len(arr), length):
         arr.append(val)
 
     return arr
 
-def first(listOrGen):
-    if type(listOrGen) == list:
+def first(listOrGen: Union[Sequence[T], Iterator[T]]):
+    if isinstance(listOrGen, Sequence):
         return listOrGen[0]
 
     return next(listOrGen)
 
-def last(l):
+def last(l: Sequence[T]):
     return l[len(l) - 1]
 
-def partition(gen, pred):
+def partition(gen: ForAble[T], pred: Callable[[T], bool]):
     t1, t2 = tee(gen)
 
     return filter(pred, t2), filterfalse(pred, t1)

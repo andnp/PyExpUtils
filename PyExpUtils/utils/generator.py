@@ -1,12 +1,14 @@
+from PyExpUtils.utils.types import AnyNumber, ForAble, T
 import numpy as np
+from typing import Generator, List
 
 # takes a generator and a number of items to group together
 # returns a generator that yields `num` items in groups
 # example:
 # grouped = group(range(10), 3)
 # grouped == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
-def group(gen, num):
-    coll = []
+def group(gen: ForAble[T], num: int) -> Generator[List[T], None, None]:
+    coll: List[T] = []
     for x in gen:
         coll.append(x)
         if len(coll) == num:
@@ -19,6 +21,6 @@ def group(gen, num):
         yield coll
         coll = []
 
-def windowAverage(arr, window):
+def windowAverage(arr: ForAble[AnyNumber], window: int) -> Generator[float, None, None]:
     for g in group(arr, window):
         yield np.mean(g)

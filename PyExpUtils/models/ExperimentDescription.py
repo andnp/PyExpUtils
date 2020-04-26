@@ -7,6 +7,10 @@ from PyExpUtils.utils.str import interpolate
 from PyExpUtils.models.Config import getConfig
 from PyExpUtils.FileSystemContext import FileSystemContext
 
+# type checking
+from typing import Optional, Union, List, Dict, Any, Type
+Keys = Union[str, List[str]]
+
 """doc
 Main workhorse class of the library.
 Takes a dictionary desribing all configurable options of an experiment and serializes that dictionary.
@@ -24,7 +28,7 @@ exp = ExperimentDescription(d)
 ```
 """
 class ExperimentDescription:
-    def __init__(self, d, path=None, keys='metaParameters'):
+    def __init__(self, d: dict, path: Optional[str] = None, keys: Keys = 'metaParameters'):
         # the raw serialized json
         self._d = d
         # a collection of keys to permute over
@@ -33,7 +37,7 @@ class ExperimentDescription:
         self.path = path
 
     # get the keys to permute over
-    def _getKeys(self, keys = None):
+    def _getKeys(self, keys: Optional[Keys] = None):
         keys = keys if keys is not None else self.keys
         return keys if isinstance(keys, list) else [keys]
 
@@ -46,10 +50,10 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': [1.0, 0.5, 0.25, 0.125], 'lambda': [1.0, 0.99, 0.98, 0.96] }
     ```
     """
-    def permutable(self, keys='metaParameters'):
+    def permutable(self, keys: Keys = 'metaParameters'):
         keys = self._getKeys(keys)
 
-        sweeps = {}
+        sweeps: Dict[str, Any] = {}
         for key in keys:
             sweeps[key] = self._d[key]
 
@@ -74,12 +78,12 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
     ```
     """
-    def getPermutation(self, idx, keys='metaParameters', Model=None):
+    def getPermutation(self, idx: int, keys: Keys = 'metaParameters'):
         sweeps = self.permutable(keys)
         permutation = getParameterPermutation(sweeps, idx)
         d = merge(self._d, permutation)
 
-        return Model(d) if Model else d
+        return d
 
     """doc
     Gives the total number of parameter permutations.
@@ -89,7 +93,7 @@ class ExperimentDescription:
     print(num_params) # -> 16
     ```
     """
-    def numPermutations(self, keys='metaParameters'):
+    def numPermutations(self, keys: Keys = 'metaParameters'):
         sweeps = self.permutable(keys)
         return getNumberOfPermutations(sweeps)
 
@@ -111,7 +115,7 @@ class ExperimentDescription:
     print(num) # -> 2
     ```
     """
-    def getRun(self, idx, keys='metaParameters'):
+    def getRun(self, idx: int, keys: Keys = 'metaParameters'):
         count = self.numPermutations(keys)
         return idx // count
 
@@ -135,7 +139,7 @@ class ExperimentDescription:
         exp_dir = getConfig().experiment_directory
 
         if self.path is None:
-            return self._d.get('name', 'unnamed')
+            return str(self._d.get('name', 'unnamed'))
 
         path = self.path \
             .replace(cwd + '/', '') \
@@ -163,7 +167,7 @@ class ExperimentDescription:
     print(path) # -> 'results/MountainCar-v0/SARSA/alpha-1.0_lambda-1.0'
     ```
     """
-    def interpolateSavePath(self, idx, permute='metaParameters', key = None):
+    def interpolateSavePath(self, idx: int, permute: Keys = 'metaParameters', key: Optional[str] = None):
         if key is None:
             config = getConfig()
             key = config.save_path
@@ -180,7 +184,7 @@ class ExperimentDescription:
         }
         d = merge(self.__dict__, special_keys)
 
-        return interpolate(key, d)
+        return interpolate(str(key), d)
 
     """doc
     Builds a `FileSystemContext` utility object that contains the save path for experimental results.
@@ -199,7 +203,7 @@ class ExperimentDescription:
     np.save(path, returns)
     ```
     """
-    def buildSaveContext(self, idx, base='', permute='metaParameters', key = None):
+    def buildSaveContext(self, idx: int, base: str = '', permute: Keys = 'metaParameters', key: Optional[str] = None):
         path = self.interpolateSavePath(idx, permute, key)
         return FileSystemContext(path, base)
 
@@ -210,7 +214,7 @@ Loads an ExperimentDescription from a JSON file (preferred way to make Experimen
 exp = loadExperiment('experiments/MountainCar-v0/sarsa.json')
 ```
 """
-def loadExperiment(path, Model=ExperimentDescription):
+def loadExperiment(path: str, Model: Type[ExperimentDescription] = ExperimentDescription):
     with open(path, 'r') as f:
         d = json.load(f)
 
