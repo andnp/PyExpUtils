@@ -1,3 +1,6 @@
 __pycache__/
 .vscode/
 *.pyc
+.mypy_cache
+
+env/
