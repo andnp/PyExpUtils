@@ -1,6 +1,7 @@
 import os
 from PyExpUtils.utils.archive import getArchiveName, inArchive
 from PyExpUtils.results.paths import listResultsPaths
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 """doc
 Returns an iterator over indices for each parameter permutation.
@@ -11,7 +12,7 @@ for i in listIndices(exp, runs=2):
     print(i, exp.getRun(i)) # -> "0 0", "1 0", "2 0", ... "0 1", "1 1", ...
 ```
 """
-def listIndices(exp, runs=1):
+def listIndices(exp: ExperimentDescription, runs: int = 1):
     perms = exp.numPermutations()
     tasks = perms * runs
     return range(tasks)
@@ -29,7 +30,7 @@ for i in listMissingResults(exp, runs=100):
     print(i) # -> 0, 1, 4, 23, 1002, ...
 ```
 """
-def listMissingResults(exp, runs=1):
+def listMissingResults(exp: ExperimentDescription, runs: int = 1):
     idx = 0
     for path in listResultsPaths(exp, runs):
         archive = getArchiveName(path)
