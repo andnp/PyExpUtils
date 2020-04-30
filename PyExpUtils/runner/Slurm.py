@@ -58,7 +58,7 @@ def buildParallel(executable: str, tasks: Iterator[Any], opts: Dict[str, Any] = 
     nodes = opts.get('nodes-per-process', 1)
     threads = opts.get('threads-per-process', 1)
     return Parallel.build({
-        'executable': f'srun -N{nodes} -n{threads} {executable}',
+        'executable': f'srun -N{nodes} -n{threads} --exclusive {executable}',
         'tasks': tasks,
         'cores': opts['ntasks']
     })
