@@ -1,5 +1,5 @@
 from typing import Any, Sequence
-from PyExpUtils.utils.types import NpList
+from PyExpUtils.utils.types import NpList, T
 import numpy as np
 
 # way faster than np.random.choice
@@ -18,7 +18,7 @@ def sample(arr: NpList):
 
 # also much faster than np.random.choice
 # choose an element from a list with uniform random probability
-def choice(arr: Sequence[Any]):
+def choice(arr: Sequence[T]) -> T:
     idxs = np.random.permutation(len(arr))
     return arr[idxs[0]]
 
