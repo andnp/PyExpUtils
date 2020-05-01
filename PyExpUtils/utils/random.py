@@ -30,7 +30,7 @@ def argmax(vals: NpList):
         if v > top:
             top = v
             ties = [i]
-        elif v == top:
+        elif v == top or (np.isnan(top) and np.isnan(v)):
             ties.append(i)
 
     return choice(ties)
