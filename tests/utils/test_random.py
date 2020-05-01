@@ -55,3 +55,11 @@ class TestRandom(unittest.TestCase):
 
         # TODO: make this a statistical test for uniformity
         self.assertEqual(counts, [5086, 0, 4914])
+
+        # return nan values
+        arr = [np.nan, np.nan, 3]
+
+        got = argmax(arr)
+        expected = 0 # either 0 or 1
+
+        self.assertEqual(got, expected)
