@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 class ArgsModel:
     def __init__(self, args: Dict[str, Any]):
-        self.experiment_paths = str(args['experiment_paths'])
+        self.experiment_paths = list(args['experiment_paths'])
         self.runs = int(args['runs'])
         self.base_path = str(args['base_path'])
         self.executable = str(args['executable'])
