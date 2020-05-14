@@ -1,5 +1,6 @@
 from PyExpUtils.utils.types import T
-from typing import Any, Dict, List, Sequence, overload
+import re
+from typing import Any, Dict, List, Sequence, Union, overload
 
 def merge(d1: Dict[Any, T], d2: Dict[Any, T]) -> Dict[Any, T]:
     ret = d2.copy()
@@ -28,6 +29,29 @@ def pick(d, keys):
         r[key] = d[key]
 
     return r
+
+def get(d: Any, key: str, default: Any = None) -> Any:
+    if key == '':
+        return d
+
+    parts = key.split('.')
+
+    el = d.get(parts[0])
+    if el is None:
+        return default
+
+    if isinstance(el, list):
+        idx = re.findall(r'\[(\d+)\]', parts[1])[0]
+        idx = int(idx)
+        if len(el) <= idx:
+            return default
+
+        return get(el[idx], '.'.join(parts[2:]), default)
+
+    if isinstance(el, dict):
+        return get(el, '.'.join(parts[1:]), default)
+
+    return el
 
 def equal(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
     for k in d1:

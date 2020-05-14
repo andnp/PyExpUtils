@@ -1,4 +1,4 @@
-from PyExpUtils.utils.dict import equal, hyphenatedStringify, merge, pick
+from PyExpUtils.utils.dict import equal, get, hyphenatedStringify, merge, pick
 import unittest
 
 class TestDict(unittest.TestCase):
@@ -81,6 +81,47 @@ class TestDict(unittest.TestCase):
         }
 
         self.assertDictEqual(got, expected)
+
+    def test_get(self):
+        # base functionality
+        d = {
+            'a': {
+                'b': 2,
+            },
+            'b': 3,
+            'c': [{ 'd': 4 }],
+            'd': {
+                'e': [5, 4, 3, 2, 1, 0],
+            },
+        }
+
+        got = get(d, 'a')
+        expected = { 'b': 2 }
+        self.assertDictEqual(got, expected)
+
+        got = get(d, 'a.b')
+        expected = 2
+        self.assertEqual(got, expected)
+
+        got = get(d, 'b')
+        expected = 3
+        self.assertEqual(got, expected)
+
+        got = get(d, 'c.[0].d')
+        expected = 4
+        self.assertEqual(got, expected)
+
+        got = get(d, 'd.e.[3]')
+        expected = 2
+        self.assertEqual(got, expected)
+
+        got = get(d, 'd.f.[3]', 'merp')
+        expected = 'merp'
+        self.assertEqual(got, expected)
+
+        got = get(d, 'd.e.[10]', 'merp')
+        expected = 'merp'
+        self.assertEqual(got, expected)
 
     def test_equal(self):
         # base functionality

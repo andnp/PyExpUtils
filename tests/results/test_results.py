@@ -8,6 +8,9 @@ exp = ExperimentDescription({
     'metaParameters': {
         'alpha': [1.0, 0.5, 0.25],
         'ratio': [1.0, 2.0, 4.0, 8.0],
+        'model': {
+            'name': ['PR', 'ESARSA'],
+        }
     },
 })
 
@@ -16,9 +19,9 @@ class TestResults(unittest.TestCase):
         results = [Result('fake/path', exp, i) for i in listIndices(exp)]
 
         r = results[0]
-        self.assertDictEqual(r.params, { 'alpha': 1.0, 'ratio': 1.0 })
+        self.assertDictEqual(r.params, { 'alpha': 1.0, 'ratio': 1.0, 'model': { 'name': 'PR' }})
         r = results[1]
-        self.assertDictEqual(r.params, { 'alpha': 0.5, 'ratio': 1.0 })
+        self.assertDictEqual(r.params, { 'alpha': 0.5, 'ratio': 1.0, 'model': { 'name': 'PR' }})
         self.assertEqual(r.idx, 1)
 
         # can overload load function
@@ -38,12 +41,19 @@ class TestResults(unittest.TestCase):
 
         split_results = splitOverParameter(results, 'alpha')
         self.assertEqual(list(split_results), [1.0, 0.5, 0.25]) # check keys
-        self.assertEqual(len(split_results[1.0]), 4)
+        self.assertEqual(len(split_results[1.0]), 8)
 
         for key in split_results:
             sub_results = split_results[key]
             for res in sub_results:
                 self.assertEqual(res.params['alpha'], key)
+
+        results = (Result('fake/path', exp, i) for i in listIndices(exp))
+
+        split_results = splitOverParameter(results, 'model.name')
+        self.assertEqual(list(split_results), ['PR', 'ESARSA']) # check keys
+        self.assertEqual(len(split_results['PR']), 12)
+
 
     def test_getBest(self):
         # lowest

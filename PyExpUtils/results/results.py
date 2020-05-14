@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Sequence, Iterator, Union
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
-from PyExpUtils.utils.dict import equal
+from PyExpUtils.utils.dict import equal, get
 
 """doc
 The `Result` objects allows performing operations over results lazily so that many file system calls can be avoided.
@@ -161,7 +161,7 @@ print(bins) # -> { 1.0: [Result, Result, ...], 0.5: [Result, Result, ...], 0.25:
 def splitOverParameter(results: ResultList, param: str):
     parts: Dict[Any, List[DuckResult]] = {}
     for r in results:
-        param_value = r.params[param]
+        param_value = get(r.params, param)
 
         if param_value not in parts:
             parts[param_value] = []
@@ -265,7 +265,7 @@ for res in results:
 ```
 """
 def whereParameterEquals(results: ResultList, param: str, value: Any):
-    return filter(lambda r: r.params.get(param, value) == value, results)
+    return filter(lambda r: get(r.params, param, value) == value, results)
 
 """doc
 Utility method for filtering results based on the value of a particular parameter.
@@ -281,4 +281,4 @@ for res in results:
 ```
 """
 def whereParameterGreaterEq(results: ResultList, param: str, value: Any):
-    return filter(lambda r: r.params.get(param, value) >= value, results)
+    return filter(lambda r: get(r.params, param, value) >= value, results)
