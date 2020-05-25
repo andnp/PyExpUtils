@@ -39,10 +39,11 @@ class Options:
     def __init__(self, d: Dict[str, Any]):
         self.account = str(d['account'])
         self.time = str(d['time'])
-        self.tasks = optionalCast(int, d.get('nodes')) # TODO: change this to "cores"
-        self.nodes = optionalCast(int, d.get('Nodes')) # TODO: change this to "nodes"
+        self.cores = optionalCast(int, d.get('cores'))
+        self.nodes = optionalCast(int, d.get('nodes'))
         self.memPerCpu = optionalCast(str, d.get('memPerCpu'))
         self.tasksPerNode = optionalCast(int, d.get('tasksPerNode'))
+        self.sequential = optionalCast(int, d.get('sequential'))
 
         self.output = optionalCast(str, d.get('output', '$SCRATCH/job_output_%j.txt'))
         self.emailType = d.get('emailType')
@@ -55,7 +56,7 @@ class Options:
         args = [
             ('--account', self.account),
             ('--time', self.time),
-            ('--ntasks', self.tasks),
+            ('--ntasks', self.cores),
             ('--nodes', self.nodes),
             ('--ntasks-per-node', self.tasksPerNode),
             ('--mem-per-cpu', self.memPerCpu),

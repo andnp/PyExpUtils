@@ -6,8 +6,9 @@ class TestSlurm(unittest.TestCase):
         opts = Options({
             'account': 'def-whitem',
             'time': '2:59:59',
-            'nodes': 1,
+            'cores': 1,
             'memPerCpu': '4G',
+            'sequential': 30,
         })
 
         got = opts.cmdArgs()
@@ -17,7 +18,7 @@ class TestSlurm(unittest.TestCase):
         opts = Options({
             'account': 'def-whitem',
             'time': '2:59:59',
-            'Nodes': 1,
+            'nodes': 1,
             'tasksPerNode': 40,
         })
 
