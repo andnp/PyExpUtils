@@ -1,7 +1,8 @@
 import os
 import json
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
 import PyExpUtils.runner.parallel as Parallel
+from PyExpUtils.utils.types import optionalCast
 from PyExpUtils.results.indices import listMissingResults, listIndices
 
 """doc
@@ -24,29 +25,45 @@ print(memory) # -> '4G'
 def gigs(n: int):
     return f'{n}G'
 
+def flagString(pairs: Sequence[Tuple[str, Optional[Any]]]):
+    s = ''
+    for i, pair in enumerate(pairs):
+        key, value = pair
+        if value is not None:
+            if i > 0: s += ' '
+            s += f'{key}={str(value)}'
+
+    return s
+
 class Options:
     def __init__(self, d: Dict[str, Any]):
         self.account = str(d['account'])
         self.time = str(d['time'])
-        self.tasks = int(d['nodes'])
-        self.memPerCpu = str(d['memPerCpu'])
-        self.tasksPerNode = int(d['tasksPerNode'])
+        self.tasks = optionalCast(int, d.get('nodes')) # TODO: change this to "cores"
+        self.nodes = optionalCast(int, d.get('Nodes')) # TODO: change this to "nodes"
+        self.memPerCpu = optionalCast(str, d.get('memPerCpu'))
+        self.tasksPerNode = optionalCast(int, d.get('tasksPerNode'))
 
-        self.output = str(d.get('output', '$SCRATCH/job_output_%j.txt'))
+        self.output = optionalCast(str, d.get('output', '$SCRATCH/job_output_%j.txt'))
         self.emailType = d.get('emailType')
         self.email = d.get('email')
 
+        # TODO: do some sanity checking of arguments here
+        # if Nodes are specified, then mem-per-cpu should not be nor should nodes be
+
     def cmdArgs(self):
         args = [
-            f'--account={self.account}',
-            f'--time={self.time}',
-            f'--ntasks={self.tasks}',
-            f'--mem-per-cpu={self.memPerCpu}',
-            f'--output={self.output}',
+            ('--account', self.account),
+            ('--time', self.time),
+            ('--ntasks', self.tasks),
+            ('--nodes', self.nodes),
+            ('--ntasks-per-node', self.tasksPerNode),
+            ('--mem-per-cpu', self.memPerCpu),
+            ('--output', self.output),
+            ('--mail-type', self.emailType),
+            ('--mail-user', self.email),
         ]
-        if self.emailType is not None: args.append(f'--mail-type={self.emailType}')
-        if self.email is not None: args.append(f'--main-user={self.email}')
-        return ' '.join(args)
+        return flagString(args)
 
 def fromFile(path: str):
     with open(path, 'r') as f:
