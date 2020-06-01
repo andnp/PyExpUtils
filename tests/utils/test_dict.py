@@ -1,4 +1,4 @@
-from PyExpUtils.utils.dict import equal, get, hyphenatedStringify, merge, pick
+from PyExpUtils.utils.dict import equal, flatKeys, get, hyphenatedStringify, merge, pick
 import unittest
 
 class TestDict(unittest.TestCase):
@@ -52,6 +52,19 @@ class TestDict(unittest.TestCase):
         got = hyphenatedStringify(d)
         expected = 'alpha--0.5_beta-0.95'
 
+        self.assertEqual(got, expected)
+
+        # nested dictionaries are iterated
+        d = {
+            'epsilon': 0.1,
+            'optimizer': {
+                'alpha': 0.9,
+                'beta': 0.99,
+            }
+        }
+
+        got = hyphenatedStringify(d)
+        expected = 'epsilon-0.1_optimizer.alpha-0.9_optimizer.beta-0.99'
         self.assertEqual(got, expected)
 
     def test_pick(self):
@@ -182,3 +195,33 @@ class TestDict(unittest.TestCase):
 
         got = equal(d1, d2)
         self.assertTrue(got)
+
+    def test_flatKeys(self):
+        d = {
+            'a': 22,
+            'b': {
+                'a': 'hey',
+                'b': {
+                    'a': 2,
+                },
+            },
+        }
+
+        got = flatKeys(d)
+        expected = [ 'a', 'b.a', 'b.b.a' ]
+
+        self.assertListEqual(got, expected)
+
+        d = {
+            'a': 22,
+            'b': [
+                { 'a': 'hi' },
+                { 'a': 'there' },
+                { 'b': 'friend' },
+            ],
+        }
+
+        got = flatKeys(d)
+        expected = [ 'a', 'b.[0].a', 'b.[1].a', 'b.[2].b' ]
+
+        self.assertListEqual(got, expected)
