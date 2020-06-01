@@ -27,6 +27,24 @@ class TestSavingPath(unittest.TestCase):
         expected = 'test/q/mountaincar/alpha-0.01_epsilon-0.05/0'
         self.assertEqual(got, expected)
 
+    def test_interpolateSavePath(self):
+        desc = {
+            'metaParameters': {
+                'optimizer': {
+                    'alpha': [0.1, 0.2],
+                    'beta': [0.99, 0.999],
+                },
+                'epsilon': 0.05,
+            },
+        }
+
+        exp = ExperimentDescription(desc)
+        key = '{params}'
+
+        got = exp.interpolateSavePath(0, key=key)
+        expected = 'epsilon-0.05_optimizer.alpha-0.1_optimizer.beta-0.99'
+        self.assertEqual(got, expected)
+
 class TestPermutations(unittest.TestCase):
     def fakeDescription(self):
         return {
@@ -97,20 +115,18 @@ class TestPermutations(unittest.TestCase):
         desc = self.fakeDescription()
         exp = ExperimentDescription(desc)
 
-        # compute number of permutations first time
         got = exp.numPermutations()
         expected = 3
         self.assertEqual(got, expected)
 
-        # recompute if the keys are different
         got = exp.numPermutations(keys='envParameters')
         expected = 2
         self.assertEqual(got, expected)
 
-        # recompute if keys is array
         got = exp.numPermutations(keys=['metaParameters', 'envParameters'])
         expected = 6
         self.assertEqual(got, expected)
+
 
 class TestExperimentName(unittest.TestCase):
     def test_fromFile(self):
