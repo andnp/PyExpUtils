@@ -1,18 +1,18 @@
 import re
+from PyExpUtils.utils.dict import DictPath, flatKeys, get
+from PyExpUtils.utils.arrays import deduplicate, last
+from typing import Dict, Any, List, Tuple
 
-from typing import Dict, Any, List, NewType, Tuple, cast
 Record = Dict[str, Any]
-
-ObjectPath = NewType('ObjectPath', str)
-PathDict = Dict[ObjectPath, Any]
+PathDict = Dict[DictPath, Any]
 
 def getParameterPermutation(sweeps: Record, index: int):
-    pairs = flattenToArray(sweeps)
+    pairs = _flattenToKeyValues(sweeps)
+
     perm: PathDict = {}
     accum = 1
 
-    for pair in pairs:
-        key, values = pair
+    for key, values in pairs:
         num = len(values)
 
         # if we have an empty array for a parameter, add that parameter back as an empty array
@@ -25,8 +25,8 @@ def getParameterPermutation(sweeps: Record, index: int):
 
     return reconstructParameters(perm)
 
-def getNumberOfPermutations(thing: Record):
-    pairs = flattenToArray(thing)
+def getNumberOfPermutations(sweeps: Record):
+    pairs = _flattenToKeyValues(sweeps)
     accum = 1
     for pair in pairs:
         _, values = pair
@@ -37,6 +37,13 @@ def getNumberOfPermutations(thing: Record):
 
 # -----------------------------------------------------------------------------
 
+def dropLastArray(key: str):
+    parts = key.split('.')
+    if re.match(r'\[\d+\]', last(parts)):
+        return '.'.join(parts[:-1])
+
+    return '.'.join(parts)
+
 def reconstructParameters(perm: PathDict):
     res: Record = {}
     for key in perm:
@@ -44,41 +51,26 @@ def reconstructParameters(perm: PathDict):
 
     return res
 
-def flattenToArray(thing: Record):
-    accum: List[Tuple[ObjectPath, Any]] = []
+def _flattenToKeyValues(sweeps: Record):
+    keys = flatKeys(sweeps)
+    keys = list(map(dropLastArray, keys))
+    keys = deduplicate(keys)
+    keys = sorted(keys)
 
-    def inner(it: Any, path: ObjectPath):
-        if isinstance(it, list):
-            # check if list contains objects
-            # if it does, keep recurring
-            if isinstance(it[0], dict):
-                i = 0
-                for sub in it:
-                    new_path = cast(ObjectPath, f'{path}.[{i}]')
-                    inner(sub, new_path)
-                    i += 1
+    out: List[Tuple[DictPath, List[Any]]] = []
+    for key in keys:
+        values = get(sweeps, key)
 
-                return
+        # allow parameters to be set like "alpha": 0.1 as a shortcut
+        if type(values) is not list:
+            values = [values]
 
-            accum.append((path, it))
-            return
+        out.append((key, values))
 
-        if isinstance(it, dict):
-            for key in sorted(it):
-                new_path = key if path == '' else f'{path}.{key}'
-                new_path = cast(ObjectPath, new_path)
-                inner(it[key], new_path)
+    return out
 
-            return
-
-        accum.append(( path, [it] ))
-        return
-
-    inner(thing, cast(ObjectPath, ''))
-    return accum
-
-def set_at_path(d: Record, path: str, val: Any):
-    def inner(d: Record, path: str, val: Any, last: str):
+def set_at_path(d: Record, path: DictPath, val: Any):
+    def inner(d: Record, path: DictPath, val: Any, last: str):
         if len(path) == 0: return d
         split = path.split('.', maxsplit = 1)
 

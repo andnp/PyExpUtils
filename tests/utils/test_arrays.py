@@ -1,5 +1,5 @@
 import unittest
-from PyExpUtils.utils.arrays import fillRest, first, last, partition
+from PyExpUtils.utils.arrays import deduplicate, fillRest, first, last, partition
 
 class TestArrays(unittest.TestCase):
     def test_fillRest(self):
@@ -61,3 +61,13 @@ class TestArrays(unittest.TestCase):
         l, r = partition(it, lambda a: a > 3)
         self.assertEqual(list(l), [4, 5, 6])
         self.assertEqual(list(r), [1, 2, 3])
+
+    def test_deduplicate(self):
+        arr = [1, 2, 3, 2, 5, 7, 1, 2, 3]
+
+        got = deduplicate(arr)
+        expected = [1, 2, 3, 5, 7]
+
+        # note that order isn't guaranteed so this is a brittle test...
+        # maybe should fix this later
+        self.assertListEqual(got, expected)

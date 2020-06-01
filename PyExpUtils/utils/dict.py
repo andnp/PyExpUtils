@@ -71,7 +71,7 @@ def get(d: Any, key: DictPath, default: Any = None) -> Any:
     if el is None:
         return default
 
-    if isinstance(el, list):
+    if isinstance(el, list) and len(parts) > 1:
         idx = re.findall(r'\[(\d+)\]', parts[1])[0]
         idx = int(idx)
         if len(el) <= idx:

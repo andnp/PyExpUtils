@@ -21,3 +21,6 @@ def partition(gen: ForAble[T], pred: Callable[[T], bool]):
     t1, t2 = tee(gen)
 
     return filter(pred, t2), filterfalse(pred, t1)
+
+def deduplicate(arr: Sequence[T]) -> List[T]:
+    return list(set(arr))

@@ -136,6 +136,10 @@ class TestDict(unittest.TestCase):
         expected = 'merp'
         self.assertEqual(got, expected)
 
+        got = get(d, 'd.e')
+        expected = [5, 4, 3, 2, 1, 0]
+        self.assertListEqual(got, expected)
+
     def test_equal(self):
         # base functionality
         d1 = {
