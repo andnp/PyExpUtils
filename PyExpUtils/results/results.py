@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Any, Dict, List, Optional, Sequence, Iterator, Union
+from typing import Any, Dict, Generator, List, Optional, Sequence, Iterator, Union
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
@@ -143,10 +143,10 @@ for result in results:
     print(result) # -> `<Result>`
 ```
 """
-def loadResults(exp: ExperimentDescription, result_file: str):
+def loadResults(exp: ExperimentDescription, result_file: str, ResultClass = Result) -> Generator[Result, Any, Any]:
     for i, path in enumerate(listResultsPaths(exp)):
         summary_path = path + '/' + result_file
-        yield Result(summary_path, exp, i)
+        yield ResultClass(summary_path, exp, i)
 
 """doc
 Utility function for sorting results into bins based on values of a metaParameter.
