@@ -1,6 +1,10 @@
 from PyExpUtils.utils.types import T
 import re
-from typing import Any, Dict, List, Sequence, Union, overload
+from typing import Any, Dict, List, Sequence, overload
+
+# making a type alias here just for readability
+# using NewType('DictPath', str) is a huge pita for all consumers
+DictPath = str
 
 def merge(d1: Dict[Any, T], d2: Dict[Any, T]) -> Dict[Any, T]:
     ret = d2.copy()
@@ -15,10 +19,10 @@ def hyphenatedStringify(d: Dict[Any, Any]):
     return '_'.join(parts)
 
 @overload
-def pick(d: Dict[Any, T], keys: str) -> T:
+def pick(d: Dict[Any, T], keys: DictPath) -> T:
     ...
 @overload
-def pick(d: Dict[Any, T], keys: List[Any]) -> Dict[Any, T]:
+def pick(d: Dict[Any, T], keys: List[DictPath]) -> Dict[Any, T]:
     ...
 def pick(d, keys):
     if not isinstance(keys, list):
@@ -30,7 +34,7 @@ def pick(d, keys):
 
     return r
 
-def get(d: Any, key: str, default: Any = None) -> Any:
+def get(d: Any, key: DictPath, default: Any = None) -> Any:
     if key == '':
         return d
 
