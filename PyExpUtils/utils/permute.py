@@ -39,6 +39,9 @@ def getNumberOfPermutations(sweeps: Record):
 
 def dropLastArray(key: str):
     parts = key.split('.')
+
+    # if the last part of the dict path is an element in an array
+    # then just drop that part
     if re.match(r'\[\d+\]', last(parts)):
         return '.'.join(parts[:-1])
 
@@ -69,6 +72,8 @@ def _flattenToKeyValues(sweeps: Record):
 
     return out
 
+# TODO: move this to the utils.dict folder and try to compress/simplify it
+# then add unit tests
 def set_at_path(d: Record, path: DictPath, val: Any):
     def inner(d: Record, path: DictPath, val: Any, last: str):
         if len(path) == 0: return d
