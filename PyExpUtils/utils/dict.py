@@ -85,12 +85,45 @@ def get(d: Any, key: DictPath, default: Any = None) -> Any:
     return el
 
 def equal(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
+    for k in list(d1.keys()) + list(d2.keys()):
+        if k in ignore:
+            continue
+
+        if k not in d2 or k not in d1:
+            return False
+
+        if d1[k] != d2[k]:
+            return False
+
+    return True
+
+def subset(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
     for k in d1:
         if k in ignore:
             continue
 
         if k not in d2:
             return False
+
+        if type(d1[k]) is dict and type(d2[k]) is dict:
+            is_subsubset = subset(d1[k], d2[k])
+            if not is_subsubset:
+                return False
+
+        elif d1[k] != d2[k]:
+            return False
+
+    return True
+
+def partialEqual(d1: Dict[T, Any], d2: Dict[T, Any]):
+    for k in d1:
+        if k not in d2:
+            continue
+
+        if type(d1[k]) is dict and type(d2[k]) is dict:
+            is_subpartialEqual = partialEqual(d1[k], d2[k])
+            if not is_subpartialEqual:
+                return False
 
         if d1[k] != d2[k]:
             return False

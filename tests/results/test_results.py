@@ -1,4 +1,4 @@
-from PyExpUtils.results.results import Result, getBest, splitOverParameter
+from PyExpUtils.results.results import Result, whereParametersEqual, getBest, splitOverParameter
 from PyExpUtils.results.indices import listIndices
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 import unittest
@@ -74,3 +74,21 @@ class TestResults(unittest.TestCase):
 
         best = getBest(results, comparator=lambda a, b: a > b)
         self.assertEqual(best.mean()[0], load_counter)
+
+    def test_whereParametersEqual(self):
+        results = (Result('fake/path', exp, i) for i in listIndices(exp))
+
+        results = whereParametersEqual(results, {
+            'alpha': 1.0,
+            'epsilon': 2, # if a parameter in the filter list does not exist, ignore it
+            'model': {
+                'name': 'ESARSA',
+            },
+        })
+        results = list(results)
+
+        self.assertEqual(len(results), 4)
+
+        got = [r.params['ratio'] for r in results]
+        expected = [1.0, 2.0, 4.0, 8.0]
+        self.assertListEqual(got, expected)

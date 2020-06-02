@@ -3,7 +3,7 @@ from typing import Any, Dict, Generator, List, Optional, Sequence, Iterator, Uni
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
-from PyExpUtils.utils.dict import equal, get
+from PyExpUtils.utils.dict import equal, get, partialEqual, subset
 
 """doc
 The `Result` objects allows performing operations over results lazily so that many file system calls can be avoided.
@@ -252,20 +252,20 @@ def find(stream: ResultList, other: DuckResult, ignore: List[str] = []):
             return res
 
 """doc
-Utility method for filtering results based on the value of a particular parameter.
+Utility method for filtering results based on the value of each listed parameter.
 If the listed parameter does not exist for some of the results (e.g. when comparing TD vs. GTD where TD does not have the second stepsize param), then those results will match True for the comparator.
 Does not require loading results from disk.
 
 ```python
 results = loadResults(exp, 'returns.npy')
-results = whereParameterEquals(results, 'alpha', 0.25)
+results = whereParametersEqual(results, { 'alpha': 0.25 })
 
 for res in results:
     print(res.params) # -> { 'alpha': 0.25, 'lambda': ... }
 ```
 """
-def whereParameterEquals(results: ResultList, param: str, value: Any):
-    return filter(lambda r: get(r.params, param, value) == value, results)
+def whereParametersEqual(results: ResultList, d: Dict[Any, Any]):
+    return filter(lambda r: partialEqual(d, r.params), results)
 
 """doc
 Utility method for filtering results based on the value of a particular parameter.
