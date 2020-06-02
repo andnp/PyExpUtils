@@ -82,7 +82,7 @@ def buildParallel(executable: str, tasks: Iterator[Any], opts: Dict[str, Any], p
         'executable': f'srun -N{nodes} -n{threads} --exclusive {executable}',
         'tasks': tasks,
         'cores': opts['ntasks'],
-        'delay': 0.5,
+        'delay': 0.5, # because srun interacts with the scheduler, a slight delay helps prevent intermittent errors
     }, parallelOpts))
 
 def schedule(script: str, opts: Optional[Options] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
