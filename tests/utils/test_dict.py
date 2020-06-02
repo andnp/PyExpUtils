@@ -1,4 +1,4 @@
-from PyExpUtils.utils.dict import equal, flatKeys, get, hyphenatedStringify, merge, pick
+from PyExpUtils.utils.dict import equal, flatKeys, get, hyphenatedStringify, merge, partialEqual, pick, subset
 import unittest
 
 class TestDict(unittest.TestCase):
@@ -198,7 +198,7 @@ class TestDict(unittest.TestCase):
         }
 
         got = equal(d1, d2)
-        self.assertTrue(got)
+        self.assertFalse(got)
 
     def test_flatKeys(self):
         d = {
@@ -229,3 +229,66 @@ class TestDict(unittest.TestCase):
         expected = [ 'a', 'b.[0].a', 'b.[1].a', 'b.[2].b' ]
 
         self.assertListEqual(got, expected)
+
+    def test_subset(self):
+        d1 = {
+            'a': 22,
+        }
+
+        d2 = {
+            'a': 22,
+            'b': 23,
+        }
+
+        got = subset(d1, d2)
+        self.assertTrue(got)
+
+        got = subset(d2, d1)
+        self.assertFalse(got)
+
+        d1 = {
+            'a': 22,
+            'b': {
+                'a': 21,
+            },
+        }
+
+        d2 = {
+            'a': 22,
+            'b': {
+                'a': 21,
+                'b': 'hey',
+            },
+        }
+
+        got = subset(d1, d2)
+        self.assertTrue(got)
+
+        got = subset(d2, d1)
+        self.assertFalse(got)
+
+    def test_partialEqual(self):
+        d1 = {}
+        d2 = { 'a': 22 }
+
+        got = partialEqual(d1, d2)
+        self.assertTrue(got)
+
+        got = partialEqual(d2, d1)
+        self.assertTrue(got)
+
+        d1 = {
+            'a': 22,
+            'c': 31,
+        }
+
+        d2 = {
+            'a': 22,
+            'b': 31,
+        }
+
+        got = partialEqual(d1, d2)
+        self.assertTrue(got)
+
+        got = partialEqual(d2, d1)
+        self.assertTrue(got)
