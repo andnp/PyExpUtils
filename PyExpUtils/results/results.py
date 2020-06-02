@@ -3,7 +3,7 @@ from typing import Any, Dict, Generator, List, Optional, Sequence, Iterator, Uni
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
-from PyExpUtils.utils.dict import equal, get, partialEqual, subset
+from PyExpUtils.utils.dict import equal, get, partialEqual
 
 """doc
 The `Result` objects allows performing operations over results lazily so that many file system calls can be avoided.
@@ -21,7 +21,6 @@ for result in results:
 results = filter(lambda res: res.params['alpha'] > 0.2, results)
 for result in results:
     plot(result.load())
-
 ```
 """
 class Result:
@@ -143,7 +142,7 @@ for result in results:
     print(result) # -> `<Result>`
 ```
 """
-def loadResults(exp: ExperimentDescription, result_file: str, ResultClass = Result) -> Generator[Result, Any, Any]:
+def loadResults(exp: ExperimentDescription, result_file: str, ResultClass=Result) -> Generator[Result, Any, Any]:
     for i, path in enumerate(listResultsPaths(exp)):
         summary_path = path + '/' + result_file
         yield ResultClass(summary_path, exp, i)
