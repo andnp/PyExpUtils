@@ -1,27 +1,7 @@
 import unittest
-from PyExpUtils.runner.parallel import build, flagString
+from PyExpUtils.runner.parallel import build
 
 class TestParallel(unittest.TestCase):
-    def test_flagString(self):
-        pairs = [
-            ('-j', 22),
-            ('--delay', 1),
-        ]
-
-        got = flagString(pairs)
-        expected = '-j 22 --delay 1'
-        self.assertEqual(got, expected)
-
-        # drop None values
-        pairs = [
-            ('-j', 22),
-            ('--delay', None),
-        ]
-
-        got = flagString(pairs)
-        expected = '-j 22'
-        self.assertEqual(got, expected)
-
     def test_build(self):
         d = {
             'executable': 'thingDoer.exe',

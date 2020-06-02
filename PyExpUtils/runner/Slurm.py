@@ -1,9 +1,10 @@
 import os
 import json
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, Optional
 import PyExpUtils.runner.parallel as Parallel
 from PyExpUtils.utils.types import optionalCast
-from PyExpUtils.results.indices import listMissingResults, listIndices
+from PyExpUtils.utils.dict import merge
+from PyExpUtils.utils.cmdline import flagString
 
 """doc
 Takes an integer number of hours and returns a well-formated time string.
@@ -25,15 +26,7 @@ print(memory) # -> '4G'
 def gigs(n: int):
     return f'{n}G'
 
-def flagString(pairs: Sequence[Tuple[str, Optional[Any]]]):
-    s = ''
-    for i, pair in enumerate(pairs):
-        key, value = pair
-        if value is not None:
-            if i > 0: s += ' '
-            s += f'{key}={str(value)}'
 
-    return s
 
 class Options:
     def __init__(self, d: Dict[str, Any]):

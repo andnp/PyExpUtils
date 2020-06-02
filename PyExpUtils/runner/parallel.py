@@ -1,14 +1,5 @@
-from typing import Any, Dict, Optional, Sequence, Tuple
-
-def flagString(pairs: Sequence[Tuple[str, Optional[Any]]]):
-    s = ''
-    for i, pair in enumerate(pairs):
-        key, value = pair
-        if value is not None:
-            if i > 0: s += ' '
-            s += f'{key} {str(value)}'
-
-    return s
+from typing import Any, Dict
+from PyExpUtils.utils.cmdline import flagString
 
 def build(d: Dict[str, Any]):
     # required
@@ -31,7 +22,7 @@ def build(d: Dict[str, Any]):
     ]
 
     # build parallel options
-    ops = flagString(pairs)
+    ops = flagString(pairs, joiner=' ')
 
     if len(tasks) == 0:
         return None
