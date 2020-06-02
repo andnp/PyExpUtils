@@ -28,22 +28,32 @@ def gigs(n: int):
 
 
 
+# if other options are needed, this can be inherited and extended by the consumer
 class Options:
     def __init__(self, d: Dict[str, Any]):
+        # mandatory slurm args
         self.account = str(d['account'])
         self.time = str(d['time'])
+
+        # optional slurm args
         self.cores = optionalCast(int, d.get('cores'))
         self.nodes = optionalCast(int, d.get('nodes'))
         self.memPerCpu = optionalCast(str, d.get('memPerCpu'))
-        self.tasksPerNode = optionalCast(int, d.get('tasksPerNode'))
-        self.sequential = optionalCast(int, d.get('sequential'))
+        self.coresPerNode = optionalCast(int, d.get('coresPerNode'))
 
+        # task management utility args
+        self.sequential = optionalCast(int, d.get('sequential'))
+        self.parallel = optionalCast(int, d.get('parallel'))
+
+        # job reporting args
         self.output = optionalCast(str, d.get('output', '$SCRATCH/job_output_%j.txt'))
         self.emailType = d.get('emailType')
         self.email = d.get('email')
 
-        # TODO: do some sanity checking of arguments here
-        # if Nodes are specified, then mem-per-cpu should not be nor should nodes be
+        # sanity checking
+        supported_email_types = ['BEGIN', 'END', 'FAIL', 'REQUEUE', 'ALL']
+        if self.emailType and self.emailType not in supported_email_types:
+            print('WARN: <emailType> is not one of the known supported types:', supported_email_types)
 
     def cmdArgs(self):
         args = [
@@ -51,7 +61,7 @@ class Options:
             ('--time', self.time),
             ('--ntasks', self.cores),
             ('--nodes', self.nodes),
-            ('--ntasks-per-node', self.tasksPerNode),
+            ('--ntasks-per-node', self.coresPerNode),
             ('--mem-per-cpu', self.memPerCpu),
             ('--output', self.output),
             ('--mail-type', self.emailType),
@@ -65,14 +75,15 @@ def fromFile(path: str):
 
     return Options(d)
 
-def buildParallel(executable: str, tasks: Iterator[Any], opts: Dict[str, Any] = {}):
+def buildParallel(executable: str, tasks: Iterator[Any], opts: Dict[str, Any], parallelOpts: Dict[str, Any] = {}):
     nodes = opts.get('nodes-per-process', 1)
     threads = opts.get('threads-per-process', 1)
-    return Parallel.build({
+    return Parallel.build(merge({
         'executable': f'srun -N{nodes} -n{threads} --exclusive {executable}',
         'tasks': tasks,
-        'cores': opts['ntasks']
-    })
+        'cores': opts['ntasks'],
+        'delay': 0.5,
+    }, parallelOpts))
 
 def schedule(script: str, opts: Optional[Options] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
     with open(script_name, 'w') as f:

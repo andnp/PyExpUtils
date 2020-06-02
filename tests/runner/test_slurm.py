@@ -19,7 +19,7 @@ class TestSlurm(unittest.TestCase):
             'account': 'def-whitem',
             'time': '2:59:59',
             'nodes': 1,
-            'tasksPerNode': 40,
+            'coresPerNode': 40,
         })
 
         got = opts.cmdArgs()
