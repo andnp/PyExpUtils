@@ -35,6 +35,11 @@ class Result:
     def _load(self):
         return np.load(self.path, allow_pickle=True)
 
+    # internal method that should be overridden to match expected data format
+    # or to signal a null / missing result
+    def _default(self):
+        return (np.NaN, np.NaN, 0)
+
     # cache the data after loading once
     # also fail semi-silently so that plotting scripts can continue even if results are missing
     def _lazyLoad(self):
@@ -46,7 +51,7 @@ class Result:
             return self._data
         except:
             print('Result not found :: ' + self.path)
-            return (np.NaN, np.NaN, 0)
+            return self._default()
 
     """doc
     Takes a function that manipulates the result data.
