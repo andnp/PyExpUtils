@@ -73,7 +73,8 @@ class TestPermutations(unittest.TestCase):
         )
 
         # can specify a list of parameters to permute over
-        got = exp.permutable(['metaParameters', 'envParameters'])
+        exp = ExperimentDescription(desc, keys=['metaParameters', 'envParameters'])
+        got = exp.permutable()
         self.assertDictEqual(
             got,
             desc
@@ -97,7 +98,8 @@ class TestPermutations(unittest.TestCase):
         )
 
         # can get permutation of multiple parameters
-        got = exp.getPermutation(0, keys=['metaParameters', 'envParameters'])
+        exp = ExperimentDescription(desc, keys=['metaParameters', 'envParameters'])
+        got = exp.getPermutation(0)
         expected = {
             'metaParameters': {
                 'alpha': 0.01,
@@ -119,11 +121,13 @@ class TestPermutations(unittest.TestCase):
         expected = 3
         self.assertEqual(got, expected)
 
-        got = exp.numPermutations(keys='envParameters')
+        exp = ExperimentDescription(desc, keys=['envParameters'])
+        got = exp.numPermutations()
         expected = 2
         self.assertEqual(got, expected)
 
-        got = exp.numPermutations(keys=['metaParameters', 'envParameters'])
+        exp = ExperimentDescription(desc, keys=['metaParameters', 'envParameters'])
+        got = exp.numPermutations()
         expected = 6
         self.assertEqual(got, expected)
 

@@ -1,3 +1,4 @@
+from PyExpUtils.utils.arrays import unwrap
 import json
 import os
 import PyExpUtils.utils.path as Path
@@ -28,18 +29,30 @@ exp = ExperimentDescription(d)
 ```
 """
 class ExperimentDescription:
-    def __init__(self, d: dict, path: Optional[str] = None, keys: Keys = 'metaParameters'):
+    def __init__(self, d: dict, path: Optional[str] = None, keys: Keys = 'metaParameters', save_key: Optional[str] = None):
         # the raw serialized json
         self._d = d
         # a collection of keys to permute over
         self.keys = keys
         # path to the experiment description file
         self.path = path
+        # interpolation key for saving
+        self.save_key = save_key
 
     # get the keys to permute over
     def _getKeys(self, keys: Optional[Keys] = None):
         keys = keys if keys is not None else self.keys
         return keys if isinstance(keys, list) else [keys]
+
+    def _getSaveKey(self, save_key: Optional[str] = None):
+        if save_key is not None:
+            return save_key
+
+        if self.save_key is not None:
+            return self.save_key
+
+        config = getConfig()
+        return config.save_path
 
     """doc
     Gives a list of parameters that can be swept over.
@@ -50,8 +63,8 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': [1.0, 0.5, 0.25, 0.125], 'lambda': [1.0, 0.99, 0.98, 0.96] }
     ```
     """
-    def permutable(self, keys: Keys = 'metaParameters'):
-        keys = self._getKeys(keys)
+    def permutable(self):
+        keys = self._getKeys()
 
         sweeps: Dict[str, Any] = {}
         for key in keys:
@@ -78,8 +91,8 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
     ```
     """
-    def getPermutation(self, idx: int, keys: Keys = 'metaParameters'):
-        sweeps = self.permutable(keys)
+    def getPermutation(self, idx: int):
+        sweeps = self.permutable()
         permutation = getParameterPermutation(sweeps, idx)
         d = merge(self._d, permutation)
 
@@ -93,8 +106,8 @@ class ExperimentDescription:
     print(num_params) # -> 16
     ```
     """
-    def numPermutations(self, keys: Keys = 'metaParameters'):
-        sweeps = self.permutable(keys)
+    def numPermutations(self):
+        sweeps = self.permutable()
         return getNumberOfPermutations(sweeps)
 
     """doc
@@ -115,8 +128,8 @@ class ExperimentDescription:
     print(num) # -> 2
     ```
     """
-    def getRun(self, idx: int, keys: Keys = 'metaParameters'):
-        count = self.numPermutations(keys)
+    def getRun(self, idx: int):
+        count = self.numPermutations()
         return idx // count
 
     """doc
@@ -167,15 +180,14 @@ class ExperimentDescription:
     print(path) # -> 'results/MountainCar-v0/SARSA/alpha-1.0_lambda-1.0'
     ```
     """
-    def interpolateSavePath(self, idx: int, permute: Keys = 'metaParameters', key: Optional[str] = None):
-        if key is None:
-            config = getConfig()
-            key = config.save_path
+    def interpolateSavePath(self, idx: int, key: Optional[str] = None):
+        key = self._getSaveKey(key)
 
-        params = pick(self.getPermutation(idx, permute), permute)
+        permute = unwrap(self._getKeys())
+        params = pick(self.getPermutation(idx), permute)
         param_string = hyphenatedStringify(params)
 
-        run = self.getRun(idx, permute)
+        run = self.getRun(idx)
 
         special_keys = {
             'params': param_string,
@@ -203,8 +215,8 @@ class ExperimentDescription:
     np.save(path, returns)
     ```
     """
-    def buildSaveContext(self, idx: int, base: str = '', permute: Keys = 'metaParameters', key: Optional[str] = None):
-        path = self.interpolateSavePath(idx, permute, key)
+    def buildSaveContext(self, idx: int, base: str = '', key: Optional[str] = None):
+        path = self.interpolateSavePath(idx, key)
         return FileSystemContext(path, base)
 
 """doc

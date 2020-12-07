@@ -1,4 +1,11 @@
-from PyExpUtils.results.results import Result, whereParametersEqual, getBest, splitOverParameter
+from PyExpUtils.utils.arrays import first
+from typing import List
+import shutil
+import os
+from PyExpUtils.results.backends.backend import BaseResult
+import PyExpUtils.results.backends.numpy as NumpyBackend
+import PyExpUtils.results.backends.csv as CsvBackend
+from PyExpUtils.results.results import loadResults, whereParametersEqual, getBest, splitOverParameter
 from PyExpUtils.results.indices import listIndices
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 import unittest
@@ -15,8 +22,26 @@ exp = ExperimentDescription({
 })
 
 class TestResults(unittest.TestCase):
+    files: List[str] = []
+
+    def getBase(self):
+        return '.tests/test_results'
+
+    def registerFile(self, name: str):
+        rest = os.path.dirname(name)
+        os.makedirs(rest, exist_ok=True)
+        self.files.append(name)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        for name in cls.files:
+            di = name.split('/')[0]
+            shutil.rmtree(di, ignore_errors=True)
+
+        return super().tearDownClass()
+
     def test_Results(self):
-        results = [Result('fake/path', exp, i) for i in listIndices(exp)]
+        results = [BaseResult('fake/path', exp, i) for i in listIndices(exp)]
 
         r = results[0]
         self.assertDictEqual(r.params, { 'alpha': 1.0, 'ratio': 1.0, 'model': { 'name': 'PR' }})
@@ -25,7 +50,7 @@ class TestResults(unittest.TestCase):
         self.assertEqual(r.idx, 1)
 
         # can overload load function
-        class TestResult(Result):
+        class TestResult(NumpyBackend.Result):
             def _load(self):
                 # (mean, std, runs)
                 return (1, 2, 3)
@@ -37,7 +62,7 @@ class TestResults(unittest.TestCase):
 
 
     def test_splitOverParameter(self):
-        results = (Result('fake/path', exp, i) for i in listIndices(exp))
+        results = (BaseResult('fake/path', exp, i) for i in listIndices(exp))
 
         split_results = splitOverParameter(results, 'alpha')
         self.assertEqual(list(split_results), [1.0, 0.5, 0.25]) # check keys
@@ -48,7 +73,7 @@ class TestResults(unittest.TestCase):
             for res in sub_results:
                 self.assertEqual(res.params['alpha'], key)
 
-        results = (Result('fake/path', exp, i) for i in listIndices(exp))
+        results = (BaseResult('fake/path', exp, i) for i in listIndices(exp))
 
         split_results = splitOverParameter(results, 'model.name')
         self.assertEqual(list(split_results), ['PR', 'ESARSA']) # check keys
@@ -58,7 +83,7 @@ class TestResults(unittest.TestCase):
     def test_getBest(self):
         # lowest
         load_counter = 0
-        class TestResult(Result):
+        class TestResult(NumpyBackend.Result):
             def _load(self):
                 nonlocal load_counter
                 load_counter += 1
@@ -66,17 +91,17 @@ class TestResults(unittest.TestCase):
 
         results = (TestResult('fake/path', exp, i) for i in listIndices(exp))
 
-        best = getBest(results)
+        best = getBest(results, prefer='small')
         self.assertEqual(best.mean()[0], 1)
 
         # highest
         results = (TestResult('fake/path', exp, i) for i in listIndices(exp))
 
-        best = getBest(results, comparator=lambda a, b: a > b)
+        best = getBest(results, prefer='big')
         self.assertEqual(best.mean()[0], load_counter)
 
     def test_whereParametersEqual(self):
-        results = (Result('fake/path', exp, i) for i in listIndices(exp))
+        results = (BaseResult('fake/path', exp, i) for i in listIndices(exp))
 
         results = whereParametersEqual(results, {
             'alpha': 1.0,
@@ -92,3 +117,96 @@ class TestResults(unittest.TestCase):
         got = [r.params['ratio'] for r in results]
         expected = [1.0, 2.0, 4.0, 8.0]
         self.assertListEqual(got, expected)
+
+    def test_loadResults(self):
+        dummy = np.array([
+            [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            [3, 4, 5, 6, 7],
+        ])
+
+        mean = np.mean(dummy, axis=0)
+        stderr = np.std(dummy, axis=0) / np.sqrt(3)
+        runs = 3
+
+        packet = (mean, stderr, runs)
+
+        # --------------------------------------------
+        # Can automatically infer Numpy data from file
+        # --------------------------------------------
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': 0.01 } }, save_key='{params}')
+
+        base = f'{self.getBase()}/test_loadResults'
+        path = NumpyBackend.saveResults(exp, 0, 'test1', packet, base=base)
+        self.registerFile(path)
+
+        results = loadResults(exp, 'test1.npy', base=base)
+        result = first(results)
+
+        self.assertDictEqual(result.params, { 'alpha': 0.01 })
+
+        got = result.mean()
+        expected = np.array([2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(got, expected))
+
+        # ---------------------------------------------
+        # Can automatically infer Numpy data from class
+        # ---------------------------------------------
+        # NOTE: this is a bad test because we don't know if it is working due to subclass identification
+        # or due to the file name. But numpy is stupid and is not letting us change the filename...
+        class DummyNumpy(NumpyBackend.Result):
+            pass
+
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': 0.01 } }, save_key='{params}')
+
+        base = f'{self.getBase()}/test_loadResults'
+        path = NumpyBackend.saveResults(exp, 0, 'test2', packet, base=base)
+        self.registerFile(path)
+
+        results = loadResults(exp, 'test2.npy', base=base, ResultClass=DummyNumpy)
+        result = first(results)
+
+        got = result.mean()
+        expected = np.array([2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(got, expected))
+
+        # ------------------------------------------
+        # Can automatically infer CSV data from file
+        # ------------------------------------------
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': 0.01 } }, save_key='{params}')
+
+        base = f'{self.getBase()}/test_loadResults'
+
+        for i, data in enumerate(dummy):
+            path = CsvBackend.saveResults(exp, i, 'test3', data, base=base)
+
+        self.registerFile(path)
+
+        results = loadResults(exp, 'test3.csv', base=base)
+        result = first(results)
+
+        got = result.mean()
+        expected = np.array([2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(got, expected))
+
+        # -------------------------------------------
+        # Can automatically infer CSV data from class
+        # -------------------------------------------
+        class DummyCsv(CsvBackend.Result):
+            pass
+
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': 0.01 } }, save_key='{params}')
+
+        base = f'{self.getBase()}/test_loadResults'
+
+        for i, data in enumerate(dummy):
+            path = CsvBackend.saveResults(exp, i, 'test4.dat', data, base=base)
+
+        self.registerFile(path)
+
+        results = loadResults(exp, 'test4.dat', base=base, ResultClass=DummyCsv)
+        result = first(results)
+
+        got = result.mean()
+        expected = np.array([2, 3, 4, 5, 6])
+        self.assertTrue(np.allclose(got, expected))

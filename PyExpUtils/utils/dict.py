@@ -1,6 +1,6 @@
 from PyExpUtils.utils.types import T
 import re
-from typing import Any, Dict, List, Sequence, overload
+from typing import Any, Dict, List, Sequence, overload, Union
 
 # making a type alias here just for readability
 # using NewType('DictPath', str) is a huge pita for all consumers
@@ -50,6 +50,9 @@ def pick(d: Dict[Any, T], keys: DictPath) -> T:
     ...
 @overload
 def pick(d: Dict[Any, T], keys: List[DictPath]) -> Dict[Any, T]:
+    ...
+@overload
+def pick(d: Dict[Any, T], keys: Union[DictPath, List[DictPath]]) -> Union[T, Dict[Any, T]]:
     ...
 def pick(d, keys):
     if not isinstance(keys, list):

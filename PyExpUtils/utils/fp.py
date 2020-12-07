@@ -1,5 +1,6 @@
 import functools
 from typing import Any, Callable, Dict
+from PyExpUtils.utils.types import T
 
 def memoize(f: Callable[[Any], Any], cache: Dict[Any, Any] = {}):
     def cacheKey(*args, **kwargs):
@@ -23,7 +24,7 @@ def memoize(f: Callable[[Any], Any], cache: Dict[Any, Any] = {}):
 
     return wrapped
 
-def once(f: Callable[[], Any]):
+def once(f: Callable[[], T]) -> Callable[[], T]:
     called = False
     ret = None
     def wrapped(*args, **kwargs):
