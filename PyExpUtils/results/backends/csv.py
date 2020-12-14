@@ -35,7 +35,7 @@ class Result(BaseResult):
 
     def stderr(self) -> np.ndarray:
         n = self.runs()
-        return np.std(self.load(), axis=0) / np.sqrt(n)
+        return np.std(self.load(), axis=0, ddof=1) / np.sqrt(n)
 
     def runs(self):
         return len(self.load())
