@@ -1,5 +1,5 @@
 from PyExpUtils.utils.arrays import unwrap
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Sequence
 from PyExpUtils.utils.dict import flatKeys, get, pick
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
@@ -21,10 +21,10 @@ def buildCsvHeader(exp: ExperimentDescription):
 
     return ','.join(keys)
 
-def buildPrecisionStr(p: int):
-    return lambda x: ('{:.' + str(p) + 'f}').format(x)
+def buildPrecisionStr(p: float):
+    return ('{:.' + str(p) + 'f}').format
 
-def arrayToCsv(data, precision: Optional[int] = None):
+def arrayToCsv(data: Sequence[Any], precision: Optional[int] = None):
     if precision is None:
         toStr: Callable[[Any], str] = str
     elif precision == 0:

@@ -58,6 +58,9 @@ def pick(d, keys):
     if not isinstance(keys, list):
         return d[keys]
 
+    if len(keys) == 1:
+        return d[keys[0]]
+
     r = {}
     for key in keys:
         r[key] = d[key]
