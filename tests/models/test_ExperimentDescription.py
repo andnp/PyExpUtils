@@ -62,7 +62,7 @@ class TestPermutations(unittest.TestCase):
     def test_permutable(self):
         desc = self.fakeDescription()
         # can specify a list of parameters to permute over
-        exp = ExperimentDescription(desc, keys=['metaParameters', 'envParameters'])
+        exp = ExperimentDescription(desc, keys=['metaParameters'])
 
         # permutable defaults to 'metaParameters' being the only permutable key
         got = exp.permutable()
@@ -83,7 +83,7 @@ class TestPermutations(unittest.TestCase):
 
     def test_getPermutations(self):
         desc = self.fakeDescription()
-        exp = ExperimentDescription(desc, keys=['metaParameters', 'envParameters'])
+        exp = ExperimentDescription(desc)
 
         # can get permutation of metaParameters by default
         got = exp.getPermutation(0)
