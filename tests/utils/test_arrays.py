@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 import numba.typed as typed
 from PyExpUtils.utils.arrays import argsmax, deduplicate, downsample, fillRest, first, last, partition, sampleFrequency
 
@@ -124,5 +125,18 @@ class TestArrays(unittest.TestCase):
 
         got = argsmax(arr)
         expected = [1, 3]
+
+        self.assertEqual(got, expected)
+
+        arr = np.array([
+            [0, 1, 1, 0, 1],
+            [2, 0, 0, 1, 2],
+        ])
+
+        got = argsmax(arr)
+        expected = [
+            [1, 2, 4],
+            [0, 4],
+        ]
 
         self.assertEqual(got, expected)

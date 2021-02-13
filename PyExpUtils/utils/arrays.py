@@ -3,7 +3,7 @@ from PyExpUtils.utils.generator import windowAverage
 from PyExpUtils.utils.types import AnyNumber, ForAble, T
 from itertools import tee, filterfalse
 from typing import Callable, List, Sequence, Union, Iterator, Optional
-from numba import njit
+from numba import njit, jit
 import numba.typed as typed
 
 def fillRest(arr: List[T], val: T, length: int) -> List[T]:
@@ -73,7 +73,7 @@ def downsample(arr: Sequence[AnyNumber], percent: Optional[float] = None, num: O
         raise Exception()
 
 @njit(cache=True)
-def argsmax(arr: Union[typed.List, np.ndarray]):
+def _argsmax(arr: np.ndarray):
     ties: List[int] = [0 for _ in range(0)] # <-- trick njit into knowing the type of this empty list
     top = arr[0]
 
@@ -92,3 +92,19 @@ def argsmax(arr: Union[typed.List, np.ndarray]):
         ties = [0]
 
     return ties
+
+@njit(cache=True)
+def _argsmax2(arr: np.ndarray):
+    ties = []
+    for i in range(arr.shape[0]):
+        ties.append(_argsmax(arr[i]))
+
+    return ties
+
+@jit(cache=True, forceobj=True)
+def argsmax(arr: Union[typed.List, np.ndarray]):
+    arr = np.array(arr)
+    if len(arr.shape) == 1:
+        return _argsmax(arr)
+
+    return _argsmax2(arr)
