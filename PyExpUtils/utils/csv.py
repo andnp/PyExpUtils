@@ -1,5 +1,5 @@
 from PyExpUtils.utils.arrays import unwrap
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, List, Optional, Sequence
 from PyExpUtils.utils.dict import flatKeys, get, pick
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
@@ -8,7 +8,7 @@ def buildCsvParams(exp: ExperimentDescription, idx: int):
     keys = flatKeys(params)
     keys = sorted(keys)
 
-    values = []
+    values: List[str] = []
     for key in keys:
         values.append(str(get(params, key)))
 
