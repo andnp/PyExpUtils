@@ -1,7 +1,8 @@
 from abc import abstractmethod
 import numpy as np
-from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Iterator, Union
+from typing import Any, Callable, Optional, Sequence, Iterator, Union
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+from PyExpUtils.utils.types import T
 
 
 """doc
@@ -27,18 +28,18 @@ class BaseResult:
         self.path = path
         self.exp = exp
         self.idx = idx
-        self.params = exp.getPermutation(idx)[exp._getKeys()[0]]
+        self.params = exp.getPermutation(idx)[exp.getKeys()[0]]
         self._data: Optional[np.ndarray] = None
 
     # internal method that should be overridden for accessing datafiles
     @abstractmethod
-    def _load(self):
+    def _load(self) -> Any:
         pass
 
     # internal method that should be overridden to match expected data format
     # or to signal a null / missing result
     @abstractmethod
-    def _default(self):
+    def _default(self) -> Any:
         pass
 
     # cache the data after loading once
@@ -122,7 +123,7 @@ for result in results:
 class ResultView:
     def __init__(self, result: BaseResult):
         self._result = result
-        self._reducer = lambda m: m
+        self._reducer = _identity
         self.idx = result.idx
         self.exp = result.exp
         self.params = result.params
@@ -142,3 +143,6 @@ class ResultView:
 
 DuckResult = Union[BaseResult, ResultView]
 ResultList = Union[Sequence[DuckResult], Iterator[DuckResult]]
+
+def _identity(m: T) -> T:
+    return m

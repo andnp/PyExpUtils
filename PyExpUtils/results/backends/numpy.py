@@ -43,7 +43,7 @@ class Result(BaseResult):
         try:
             self._data = self._load()
             return self._data
-        except:
+        except Exception:
             print('Result not found :: ' + self.path)
             return self._default()
 
@@ -115,9 +115,10 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
             yield _result_cache.get(summary_path, lambda path: ResultClass(path, exp, i))
 
         else:
-        yield ResultClass(summary_path, exp, i)
+            yield ResultClass(summary_path, exp, i)
 
-def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any,  base: str = './'):
+
+def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './'):
     save_context = exp.buildSaveContext(idx, base=base)
     save_context.ensureExists()
 

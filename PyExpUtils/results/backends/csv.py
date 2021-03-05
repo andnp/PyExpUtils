@@ -42,7 +42,7 @@ class Result(BaseResult):
         return len(self.load())
 
 
-def hasUnevenShape(arr: List) -> bool:
+def hasUnevenShape(arr: List[List[str]]) -> bool:
     expected = len(arr[0])
     for x in arr:
         if len(x) != expected:
@@ -134,7 +134,7 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cac
 
         yield ResultClass(exp, idx, result)
 
-def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any,  base: str = './', precision: Optional[int] = None):
+def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './', precision: Optional[int] = None):
     save_context = exp.buildSaveContext(idx, base=base)
     save_context.ensureExists()
 

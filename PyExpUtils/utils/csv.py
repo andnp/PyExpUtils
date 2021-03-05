@@ -4,7 +4,7 @@ from PyExpUtils.utils.dict import flatKeys, get, pick
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 def buildCsvParams(exp: ExperimentDescription, idx: int):
-    params = pick(exp.getPermutation(idx), unwrap(exp._getKeys()))
+    params = pick(exp.getPermutation(idx), unwrap(exp.getKeys()))
     keys = flatKeys(params)
     keys = sorted(keys)
 
@@ -15,7 +15,7 @@ def buildCsvParams(exp: ExperimentDescription, idx: int):
     return ','.join(values)
 
 def buildCsvHeader(exp: ExperimentDescription):
-    params = pick(exp.getPermutation(0), unwrap(exp._getKeys()))
+    params = pick(exp.getPermutation(0), unwrap(exp.getKeys()))
     keys = flatKeys(params)
     keys = sorted(keys)
 

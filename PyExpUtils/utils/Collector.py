@@ -42,7 +42,7 @@ class Collector:
 
         self.run_data[name] = arr
 
-    def concat(self, name: str, values: List):
+    def concat(self, name: str, values: List[Any]):
         # don't just append to the array
         # we need to make sure we respect sample rates
         for v in values:

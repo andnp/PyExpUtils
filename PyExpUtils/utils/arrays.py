@@ -18,7 +18,7 @@ def first(listOrGen: Union[Sequence[T], Iterator[T]]):
 
     return next(listOrGen)
 
-def last(l: Sequence[T]):
+def last(l: Sequence[T]) -> T:
     return l[len(l) - 1]
 
 def partition(gen: ForAble[T], pred: Callable[[T], bool]):
@@ -29,13 +29,13 @@ def partition(gen: ForAble[T], pred: Callable[[T], bool]):
 def deduplicate(arr: Sequence[T]) -> List[T]:
     return list(set(arr))
 
-def unwrap(arr: List[T]):
+def unwrap(arr: List[T]) -> Union[T, List[T]]:
     if len(arr) == 1:
         return arr[0]
 
     return arr
 
-def sampleFrequency(arr: Sequence[T], percent: Optional[float] = None, num: Optional[int] = None):
+def sampleFrequency(arr: Sequence[Any], percent: Optional[float] = None, num: Optional[int] = None):
     if percent is None and num is None:
         raise Exception()
 
@@ -73,9 +73,9 @@ def downsample(arr: Sequence[AnyNumber], percent: Optional[float] = None, num: O
         raise Exception()
 
 @njit(cache=True)
-def _argsmax(arr: np.ndarray):
-    ties: List[int] = [0 for _ in range(0)] # <-- trick njit into knowing the type of this empty list
-    top = arr[0]
+def argsmax(arr: Union[typed.List, np.ndarray]):
+    ties: List[int] = [0 for _ in range(0)]  # <-- trick njit into knowing the type of this empty list
+    top: float = arr[0]
 
     for i in range(len(arr)):
         if arr[i] > top:

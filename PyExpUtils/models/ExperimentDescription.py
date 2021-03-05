@@ -29,7 +29,7 @@ exp = ExperimentDescription(d)
 ```
 """
 class ExperimentDescription:
-    def __init__(self, d: dict, path: Optional[str] = None, keys: Keys = 'metaParameters', save_key: Optional[str] = None):
+    def __init__(self, d: Dict[str, Any], path: Optional[str] = None, keys: Keys = 'metaParameters', save_key: Optional[str] = None):
         # the raw serialized json
         self._d = d
         # a collection of keys to permute over
@@ -40,7 +40,7 @@ class ExperimentDescription:
         self.save_key = save_key
 
     # get the keys to permute over
-    def _getKeys(self, keys: Optional[Keys] = None):
+    def getKeys(self, keys: Optional[Keys] = None):
         keys = keys if keys is not None else self.keys
         return keys if isinstance(keys, list) else [keys]
 
@@ -64,7 +64,7 @@ class ExperimentDescription:
     ```
     """
     def permutable(self):
-        keys = self._getKeys()
+        keys = self.getKeys()
 
         sweeps: Dict[str, Any] = {}
         for key in keys:
@@ -151,6 +151,9 @@ class ExperimentDescription:
         cwd = os.getcwd()
         exp_dir = getConfig().experiment_directory
 
+        if exp_dir is None:
+            exp_dir = ''
+
         if self.path is None:
             return str(self._d.get('name', 'unnamed'))
 
@@ -183,7 +186,7 @@ class ExperimentDescription:
     def interpolateSavePath(self, idx: int, key: Optional[str] = None):
         key = self._getSaveKey(key)
 
-        permute = unwrap(self._getKeys())
+        permute = unwrap(self.getKeys())
         params = pick(self.getPermutation(idx), permute)
         param_string = hyphenatedStringify(params)
 
