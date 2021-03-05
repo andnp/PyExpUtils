@@ -213,12 +213,12 @@ def condorcet(ballots: List[RankedBallot]) -> Name:
     # they win if they won against everyone except themselves
     if ma == n - 1:
         idx = np.argmax(wins)
-        return names[idx]
+        return names[int(idx)]
 
     # otherwise, delete the worst candidate and try again
     idx = np.argmin(wins)
 
-    loser = names[idx]
+    loser = names[int(idx)]
     for ballot in ballots:
         del ballot[loser]
 
