@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
 import numba.typed as typed
-from PyExpUtils.utils.arrays import argsmax, deduplicate, downsample, fillRest, first, last, partition, sampleFrequency
+import numpy as np
+from PyExpUtils.utils.arrays import argsmax, deduplicate, downsample, fillRest, first, last, npPadUneven, padUneven, partition, sampleFrequency
 
 class TestArrays(unittest.TestCase):
     def test_fillRest(self):
@@ -9,7 +10,7 @@ class TestArrays(unittest.TestCase):
         arr = [1, 2, 3, 4]
 
         got = fillRest(arr, 5, 10)
-        expected = [1, 2, 3, 4, 5, 5, 5, 5, 5, 5] # length 10
+        expected = [1, 2, 3, 4, 5, 5, 5, 5, 5, 5]  # length 10
 
         self.assertEqual(got, expected)
 
@@ -140,3 +141,37 @@ class TestArrays(unittest.TestCase):
         ]
 
         self.assertEqual(got, expected)
+
+    def test_padUneven(self):
+        arr = [
+            [1., 2.],
+            [2., 3., 4.],
+            [1.],
+        ]
+
+        res = padUneven(arr, np.nan)
+
+        e = [
+            [1., 2., np.nan],
+            [2., 3., 4.],
+            [1., np.nan, np.nan],
+        ]
+
+        self.assertEqual(res, e)
+
+    def test_npPadUneven(self):
+        arr = [
+            np.array([1., 2]),
+            np.array([2., 3, 4]),
+            np.array([1.]),
+        ]
+
+        res = npPadUneven(arr, np.nan)
+
+        e = np.array([
+            [1., 2, np.nan],
+            [2, 3, 4],
+            [1, np.nan, np.nan],
+        ])
+
+        self.assertTrue(np.allclose(res, e, equal_nan=True))

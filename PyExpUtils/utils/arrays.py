@@ -1,12 +1,46 @@
+from copy import deepcopy
 import numpy as np
 from PyExpUtils.utils.generator import windowAverage
 from PyExpUtils.utils.types import AnyNumber, ForAble, T
 from itertools import tee, filterfalse
-from typing import Callable, List, Sequence, Union, Iterator, Optional
+from typing import Any, Callable, List, Sequence, Union, Iterator, Optional
 from numba import njit, jit
 import numba.typed as typed
 
+def npPadUneven(arr: Sequence[np.ndarray], val: float) -> np.ndarray:
+    longest = len(arr[0])
+    for sub in arr:
+        l = sub.shape[0]
+        if l > longest:
+            longest = l
+
+    out = np.empty((len(arr), longest))
+    for i, sub in enumerate(arr):
+        out[i] = np.pad(sub, (0, longest - sub.shape[0]), constant_values=val)
+
+    return out
+
+def padUneven(arr: List[List[T]], val: T) -> List[List[T]]:
+    longest = len(arr[0])
+    for sub in arr:
+        l = len(sub)
+        if l > longest:
+            longest = l
+
+    out: List[List[T]] = []
+    for sub in arr:
+        out.append(fillRest(sub, val, longest))
+
+    return out
+
 def fillRest(arr: List[T], val: T, length: int) -> List[T]:
+    out = deepcopy(arr)
+    for _ in range(len(arr), length):
+        out.append(val)
+
+    return out
+
+def fillRest_(arr: List[T], val: T, length: int) -> List[T]:
     for _ in range(len(arr), length):
         arr.append(val)
 

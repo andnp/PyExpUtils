@@ -1,42 +1,42 @@
 import numpy as np
-from typing import Any, Callable, Dict, List, Optional, Type, Union
-from PyExpUtils.utils.types import T
+from typing import Any, Callable, Dict, List, Optional, Type
+from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.results.indices import listIndices
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+from PyExpUtils.utils.arrays import npPadUneven
 from PyExpUtils.utils.cache import Cache
 from PyExpUtils.utils.csv import arrayToCsv, buildCsvHeader, buildCsvParams
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
-from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.utils.fp import once
 
+# if we get uneven length rows, then we can't convert to an ndarray
+# so instead we have to store as a raw list
 class Result(BaseResult):
     def __init__(self, exp: ExperimentDescription, idx: int, result: List[Optional[List[str]]]):
         super().__init__('', exp, idx)
         self._raw = result
-        self.data: Optional[Union[np.ndarray, List]] = None
+        self.data: Optional[np.ndarray] = None
+        self.uneven = False
 
-    def load(self) -> Union[np.ndarray, List]:
+    def load(self) -> np.ndarray:
         if self.data is None:
             clean = list(dropNones(self._raw))
-            uneven = hasUnevenShape(clean)
+            self.uneven = hasUnevenShape(clean)
 
-            data: Union[List, np.ndarray] = []
-            if uneven:
+            if self.uneven:
                 warnShape()
-                data = [ np.array(x, dtype='float32') for x in clean ]
+                self.data = npPadUneven([ np.array(x, dtype='float32') for x in clean ], np.nan)
 
             else:
-                data = np.array(clean, dtype='float32')
-
-            self.data = data
+                self.data = np.array(clean, dtype='float32')
 
         return self.data
 
     def mean(self) -> np.ndarray:
-        return np.mean(self.load(), axis=0)
+        return np.nanmean(self.load(), axis=0)
 
     def stderr(self) -> np.ndarray:
         n = self.runs()
-        return np.std(self.load(), axis=0, ddof=1) / np.sqrt(n)
+        return np.nanstd(self.load(), axis=0, ddof=1) / np.sqrt(n)
 
     def runs(self):
         return len(self.load())
@@ -82,7 +82,11 @@ def buildResultDict(data: List[str], exp: ExperimentDescription):
         # grab the parameter settings as a comma-separated string
         key = ','.join(parts[:cols])
         # get the run number so we can reconstruct in order
-        run = int(parts[cols])
+        # this might fail whenever there is an inconsistent number of columns
+        try:
+            run = int(parts[cols])
+        except Exception:
+            continue
         # grab whatever data is associated with this row
         values = parts[cols + 1:]
 

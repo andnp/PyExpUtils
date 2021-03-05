@@ -1,7 +1,6 @@
 import numpy as np
-from typing import Any, Dict, Generator, List, Optional, Type, cast
+from typing import Any, Dict, Generator, List, Optional, Type
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
-from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.utils.arrays import first
 from PyExpUtils.utils.dict import equal, get, partialEqual
 from PyExpUtils.results.backends.backend import BaseResult, ResultList, DuckResult

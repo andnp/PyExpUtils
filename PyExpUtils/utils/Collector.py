@@ -1,7 +1,7 @@
 from PyExpUtils.utils.permute import Record
 from typing import Any, Callable, Dict, List
 import numpy as np
-from PyExpUtils.utils.arrays import last, fillRest
+from PyExpUtils.utils.arrays import last, fillRest_
 
 class Collector:
     def __init__(self):
@@ -27,7 +27,7 @@ class Collector:
     def fillRest(self, name: str, steps: int):
         arr = self.run_data[name]
         l = last(arr)
-        fillRest(arr, l, steps)
+        fillRest_(arr, l, steps)
 
     def collect(self, name: str, value: Any):
         sample_rate = self.sample_rate.get(name, 1)
