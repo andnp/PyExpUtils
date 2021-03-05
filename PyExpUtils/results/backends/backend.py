@@ -51,7 +51,7 @@ class BaseResult:
         try:
             self._data = self._load()
             return self._data
-        except:
+        except Exception:
             print('Result not found :: ' + self.path)
             return self._default()
 

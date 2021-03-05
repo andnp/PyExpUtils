@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Any, Dict, Generator, List, Optional, Type
+from typing import Any, Callable, Dict, Generator, List, Optional, Type
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.utils.arrays import first
 from PyExpUtils.utils.dict import equal, get, partialEqual
@@ -88,9 +88,10 @@ def sliceOverParameter(results: ResultList, slicer: DuckResult, param: str):
 
     return sl
 
+Reducer = Callable[[np.ndarray], float]
 """doc
 Returns the best result over a list of results.
-Can defined "best" based on the `comparator` option; defaults to returning smallest result (e.g. smallest error).
+Can defined "best" based on the `prefer` option; defaults to returning biggest result (e.g. biggest return).
 Can also find best result over a range of a learning curve by specifying the last n steps with `steps=n` or the last p percent of steps with `percent=p`; defaults to returning mean over whole learning curve.
 **Requires loading all results in list from disk.**
 
@@ -108,10 +109,10 @@ best = getBest(results)
 print(best.params) # -> { 'alpha': 0.25, 'lambda': 1.0 }
 ```
 """
-def getBest(results: ResultList, steps: Optional[int] = None, percent: float = 1.0, prefer: str = 'big'):
-    comparator = lambda a, b: a > b
+def getBest(results: ResultList, steps: Optional[int] = None, percent: float = 1.0, prefer: str = 'big', reducer: Optional[Reducer] = None):
+    comparator = greater
     if prefer == 'small':
-        comparator = lambda a, b: a < b
+        comparator = lesser
 
     low = first(results)
     if steps is None:
@@ -119,15 +120,24 @@ def getBest(results: ResultList, steps: Optional[int] = None, percent: float = 1
 
     steps = int(steps * percent)
 
+    if reducer is None:
+        reducer = lambda arr: np.mean(arr)
+
     for r in results:
         a = r.mean()
         b = low.mean()
-        am = np.mean(a[0 - steps:])
-        bm = np.mean(b[0 - steps:])
+        am = reducer(a[0 - steps:])
+        bm = reducer(b[0 - steps:])
         if np.isnan(bm) or comparator(am, bm):
             low = r
 
     return low
+
+def greater(a: float, b: float):
+    return a > b
+
+def lesser(a: float, b: float):
+    return a < b
 
 """doc
 Find a specific result based on the metaParameters of another result.
