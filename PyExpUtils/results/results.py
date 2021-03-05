@@ -20,7 +20,7 @@ for result in results:
     print(result) # -> `<Result>`
 ```
 """
-def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', ResultClass=BaseResult) -> Generator[BaseResult, Any, Any]:
+def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', cache: bool = True, ResultClass: Type[BaseResult] = BaseResult) -> Generator[BaseResult, Any, Any]:
     # try to guess what backend to use
     backend = 'csv'
     # first check the file ending to get a hint
@@ -29,11 +29,11 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
 
     # but override that if a class is specified
     # trust the caller knows what they're doing if this is specified
-    if issubclass(ResultClass, NumpyBackend.Result) or ResultClass == NumpyBackend.Result:
-        return NumpyBackend.loadResults(exp, result_file, base, ResultClass)
+    if issubclass(ResultClass, NumpyBackend.Result):
+        return NumpyBackend.loadResults(exp, result_file, base, cache, ResultClass)
 
-    elif issubclass(ResultClass, CsvBackend.Result) or ResultClass == CsvBackend.Result:
-        return CsvBackend.loadResults(exp, result_file, base, ResultClass)
+    elif issubclass(ResultClass, CsvBackend.Result):
+        return CsvBackend.loadResults(exp, result_file, base, cache, ResultClass)
 
     if backend == 'csv':
         return CsvBackend.loadResults(exp, result_file, base)

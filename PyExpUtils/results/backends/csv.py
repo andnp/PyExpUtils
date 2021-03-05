@@ -2,6 +2,7 @@ import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 from PyExpUtils.utils.types import T
 from PyExpUtils.results.indices import listIndices
+from PyExpUtils.utils.cache import Cache
 from PyExpUtils.utils.csv import arrayToCsv, buildCsvHeader, buildCsvParams
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.backends.backend import BaseResult
@@ -60,6 +61,8 @@ warnShape: Callable[[], None] = once(lambda: print('WARN - uneven shapes detecte
 # For loading csv files
 # ---------------------
 
+ResultDict = Dict[str, List[Optional[List[str]]]]
+
 # instead of scanning multiple passes through the CSV to find the lines corresponding to a certain set of parameters
 # first take a single scanning pass and utilize the dictionary's hashing to build a map
 #   ParameterPermutation -> List[results]
@@ -69,7 +72,7 @@ def buildResultDict(data: List[str], exp: ExperimentDescription):
     header = buildCsvHeader(exp)
     cols = len(header.split(','))
 
-    out: Dict[str, List[Optional[List[str]]]] = {}
+    out: ResultDict = {}
 
     # estimate how many runs each parameter setting should have
     expected_runs = int(np.ceil(len(data) / exp.numPermutations()))
@@ -104,13 +107,22 @@ def buildResultDict(data: List[str], exp: ExperimentDescription):
 
     return out
 
+_result_cache = Cache[ResultDict]()
 
-def loadResults(exp: ExperimentDescription, filename: str, base: str = './', ResultClass: Type[Result] = Result):
-    context = exp.buildSaveContext(0, base=base)
-    with open(context.resolve(filename), 'r') as f:
+def _getResultDict(path: str, exp: ExperimentDescription):
+    with open(path, 'r') as f:
         data = f.readlines()
 
-    result_dict = buildResultDict(data, exp)
+    return buildResultDict(data, exp)
+
+def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cache: bool = True, ResultClass: Type[Result] = Result):
+    context = exp.buildSaveContext(0, base=base)
+    path = context.resolve(filename)
+
+    if cache:
+        result_dict = _result_cache.get(path, lambda path: _getResultDict(path, exp))
+    else:
+        result_dict = _getResultDict(context.resolve(filename), exp)
 
     for idx in listIndices(exp):
         key = buildCsvParams(exp, idx)

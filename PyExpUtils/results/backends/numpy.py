@@ -3,6 +3,7 @@ from typing import Any, Generator, Type
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.backends.backend import BaseResult, ResultView
+from PyExpUtils.utils.cache import Cache
 
 """doc
 The `Result` objects allows performing operations over results lazily so that many file system calls can be avoided.
@@ -91,6 +92,9 @@ class Result(BaseResult):
     def stderr(self):
         return self.load()[1]
 
+
+_result_cache = Cache[Result]()
+
 """doc
 Returns an iterator over all results that are expected to exist given a particular experiment.
 Takes the `ExperimentDescription` and the name of the result file.
@@ -103,9 +107,14 @@ for result in results:
     print(result) # -> `<Result>`
 ```
 """
-def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', ResultClass: Type[Result]=Result) -> Generator[Result, Any, Any]:
+def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', cache: bool = True, ResultClass: Type[Result] = Result) -> Generator[Result, Any, Any]:
     for i, path in enumerate(listResultsPaths(exp)):
         summary_path = base + '/' + path + '/' + result_file
+
+        if cache:
+            yield _result_cache.get(summary_path, lambda path: ResultClass(path, exp, i))
+
+        else:
         yield ResultClass(summary_path, exp, i)
 
 def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any,  base: str = './'):
