@@ -52,18 +52,18 @@ class TestPath(unittest.TestCase):
     def test_join(self):
         test_parts = ['/this', 'is', 'a/', 'test']
 
-        got = join(test_parts)
+        got = join(*test_parts)
         expected = '/this/is/a/test'
         self.assertEqual(got, expected)
 
         test_parts = ['this', '//is/', '/a/', 'test/']
 
-        got = join(test_parts)
+        got = join(*test_parts)
         expected = 'this/is/a/test'
         self.assertEqual(got, expected)
 
         test_parts = ['this/is', 'a', 'test']
 
-        got = join(test_parts)
+        got = join(*test_parts)
         expected = 'this/is/a/test'
         self.assertEqual(got, expected)

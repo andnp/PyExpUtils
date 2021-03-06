@@ -75,9 +75,9 @@ def _flattenToKeyValues(sweeps: Record):
 # TODO: move this to the utils.dict folder and try to compress/simplify it
 # then add unit tests
 def set_at_path(d: Record, path: DictPath, val: Any):
-    def inner(d: Record, path: DictPath, val: Any, last: str):
+    def inner(d: Record, path: DictPath, val: Any, last: str) -> Record:
         if len(path) == 0: return d
-        split = path.split('.', maxsplit = 1)
+        split = path.split('.', maxsplit=1)
 
         part, rest = split if len(split) > 1 else [split[0], '']
         nxt = rest.split('.')[0]

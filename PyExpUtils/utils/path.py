@@ -1,6 +1,5 @@
 import re
 from PyExpUtils.utils.arrays import last
-from collections.abc import Iterable
 
 def split(path: str):
     parts = path.split('/')
@@ -13,10 +12,10 @@ def split(path: str):
 
 def rest(path: str):
     parts = split(path)
-    return join(parts[1:])
+    return join(*parts[1:])
 
 def up(path: str):
-    return join(split(path)[:-1])
+    return join(*split(path)[:-1])
 
 def fileName(path: str):
     parts = split(path)
@@ -35,10 +34,7 @@ def removeFirstAndLastSlash(s: str):
 def remoteDuplicatedSlashes(s: str):
     return re.sub(r'/+', '/', s)
 
-def join(*argv):
-    if isinstance(argv[0], Iterable) and type(argv[0]) is not str:
-        argv = argv[0]
-
+def join(*argv: str):
     # remote empty strings
     gen = filter(lambda s: s != '', argv)
     # remote any duplicated slashes, e.g. this//is/a/path

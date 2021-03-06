@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any, List, Sequence
 from PyExpUtils.utils.types import NpList, T
 import numpy as np
 
@@ -25,7 +25,7 @@ def choice(arr: Sequence[T], rng: Any = np.random) -> T:
 # argmax that breaks ties randomly
 def argmax(vals: NpList, rng: Any = np.random):
     top = vals[0]
-    ties = []
+    ties: List[int] = []
     for i, v in enumerate(vals):
         if v > top:
             top = v

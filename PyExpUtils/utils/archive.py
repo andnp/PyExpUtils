@@ -13,7 +13,7 @@ def inArchive(archive: str, path: str):
         tar = openTar(archive)
         tar.getmember(path)
         exists = True
-    except:
+    except Exception:
         pass
 
     return exists

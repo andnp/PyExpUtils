@@ -1,3 +1,4 @@
+from PyExpUtils.utils.dict import pick
 from copy import deepcopy
 import numpy as np
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
@@ -26,7 +27,7 @@ def scoreMetaparameters(results: ResultList, exp: ExperimentDescription, reducer
 
     all_scores: List[ScoredCandidate] = []
     for i in range(exp.numPermutations()):
-        params = exp.getPermutation(i)[exp.getKeys()]
+        params = pick(exp.getPermutation(i), exp.getKeys())
         results = whereParametersEqual(all_results, params)
         results = list(results)
 

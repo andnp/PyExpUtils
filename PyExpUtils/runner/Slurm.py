@@ -27,7 +27,6 @@ def gigs(n: int):
     return f'{n}G'
 
 
-
 # if other options are needed, this can be inherited and extended by the consumer
 class Options:
     def __init__(self, d: Dict[str, Any]):

@@ -17,6 +17,8 @@ def flatKeys(d: Dict[Any, Any]) -> List[DictPath]:
     keys = d.keys()
     out: List[DictPath] = []
     for key in keys:
+        sub_keys: List[str] = []
+
         if type(d[key]) is dict:
             sub_keys = flatKeys(d[key])
             out += [f'{key}.{subkey}' for subkey in sub_keys]
@@ -54,20 +56,20 @@ def pick(d: Dict[Any, T], keys: List[DictPath]) -> Dict[Any, T]:
 @overload
 def pick(d: Dict[Any, T], keys: Union[DictPath, List[DictPath]]) -> Union[T, Dict[Any, T]]:
     ...
-def pick(d, keys):
+def pick(d: Dict[Any, T], keys: Union[DictPath, List[DictPath]]) -> Union[T, Dict[Any, T]]:
     if not isinstance(keys, list):
         return d[keys]
 
     if len(keys) == 1:
         return d[keys[0]]
 
-    r = {}
+    r: Dict[Any, T] = {}
     for key in keys:
         r[key] = d[key]
 
     return r
 
-def get(d: Any, key: DictPath, default: Any = None) -> Any:
+def get(d: Dict[str, Union[Dict[Any, Any], List[Any], Any]], key: DictPath, default: Any = None) -> Any:
     if key == '':
         return d
 
