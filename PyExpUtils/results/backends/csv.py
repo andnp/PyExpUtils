@@ -124,7 +124,12 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cac
     path = context.resolve(filename)
 
     if cache:
-        result_dict = _result_cache.get(path, lambda path: _getResultDict(path, exp))
+        # need to do a little manipulation to make sure we don't exclusively rely on the path
+        # as a uniquely identifying key
+        key = f'{path} + {exp.permutable()}'
+
+        # then we deconstruct the modification
+        result_dict = _result_cache.get(key, lambda key: _getResultDict(key.split(' + ')[0], exp))
     else:
         result_dict = _getResultDict(context.resolve(filename), exp)
 

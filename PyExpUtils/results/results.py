@@ -35,10 +35,10 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
         return CsvBackend.loadResults(exp, result_file, base, cache, ResultClass)
 
     if backend == 'csv':
-        return CsvBackend.loadResults(exp, result_file, base)
+        return CsvBackend.loadResults(exp, result_file, base, cache)
 
     elif backend == 'numpy':
-        return NumpyBackend.loadResults(exp, result_file, base)
+        return NumpyBackend.loadResults(exp, result_file, base, cache)
 
     else:
         raise NotImplementedError(f'Unknown backend encountered: {backend}')
@@ -121,7 +121,7 @@ def getBest(results: ResultList, steps: Optional[int] = None, percent: float = 1
     steps = int(steps * percent)
 
     if reducer is None:
-        reducer = lambda arr: np.mean(arr)
+        reducer = lambda arr: float(np.mean(arr))
 
     for r in results:
         a = r.mean()

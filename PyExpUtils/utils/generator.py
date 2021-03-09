@@ -1,6 +1,6 @@
 from PyExpUtils.utils.types import AnyNumber, ForAble, T
 import numpy as np
-from typing import Generator, List
+from typing import Generator, List, cast
 
 # takes a generator and a number of items to group together
 # returns a generator that yields `num` items in groups
@@ -23,4 +23,4 @@ def group(gen: ForAble[T], num: int) -> Generator[List[T], None, None]:
 
 def windowAverage(arr: ForAble[AnyNumber], window: int) -> Generator[float, None, None]:
     for g in group(arr, window):
-        yield np.mean(g)
+        yield cast(float, np.mean(g))

@@ -21,7 +21,7 @@ class RankedCandidate(NamedTuple):
     rank: int
     score: float = 0
 
-def scoreMetaparameters(results: ResultList, exp: ExperimentDescription, reducer: Reducer = np.mean):
+def scoreMetaparameters(results: ResultList, exp: ExperimentDescription, reducer: Reducer = lambda x: float(np.mean(x))):
     # gotta cache the results
     all_results = list(results)
 

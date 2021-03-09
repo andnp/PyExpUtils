@@ -1,5 +1,5 @@
 from PyExpUtils.utils.permute import Record
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, cast
 import numpy as np
 from PyExpUtils.utils.arrays import last, fillRest_
 
@@ -73,7 +73,7 @@ class Collector:
         min_len = min(map(lambda a: len(a), arr))
 
         arr = list(map(lambda a: a[:min_len], arr))
-        mean: float = np.mean(arr, axis=0)
-        stderr: float = np.std(arr, axis=0, ddof=1) / np.sqrt(runs)
+        mean: float = cast(float, np.mean(arr, axis=0))
+        stderr: float = cast(float, np.std(arr, axis=0, ddof=1)) / np.sqrt(runs)
 
         return (mean, stderr, runs)
