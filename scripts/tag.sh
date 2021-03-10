@@ -3,6 +3,12 @@
 git config credential.helper "store --file=.git/credentials"
 echo "https://${GH_TOKEN}:@github.com" > .git/credentials
 
+git config user.email "andnpatterson@gmail.com"
+git config user.name "github-action"
+
+git fetch --unshallow
+git fetch --all --tags
+
 # get highest tag number
 VERSION=`git describe --abbrev=0 --tags`
 
@@ -19,13 +25,14 @@ NEW_TAG="$VNUM1.$VNUM2"
 
 echo "Updating $VERSION to $NEW_TAG"
 
+git checkout master
+
 # get current hash and see if it already has a tag
 GIT_COMMIT=`git rev-parse HEAD`
 NEEDS_TAG=`git describe --contains $GIT_COMMIT`
 
 # only tag if no tag already
 if [ -z "$NEEDS_TAG" ]; then
-    git checkout master
     sed -i -E "s/(version=).+?,/\1$NEW_TAG,/" setup.py
     git add setup.py
     git commit -m "updating to version $NEW_TAG"
