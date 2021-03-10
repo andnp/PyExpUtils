@@ -1,8 +1,7 @@
 import unittest
 import numpy as np
 import numba.typed as typed
-import numpy as np
-from PyExpUtils.utils.arrays import argsmax, deduplicate, downsample, fillRest, first, last, npPadUneven, padUneven, partition, sampleFrequency
+from PyExpUtils.utils.arrays import argsmax, argsmax2, deduplicate, downsample, fillRest, first, last, npPadUneven, padUneven, partition, sampleFrequency
 
 class TestArrays(unittest.TestCase):
     def test_fillRest(self):
@@ -134,7 +133,7 @@ class TestArrays(unittest.TestCase):
             [2, 0, 0, 1, 2],
         ])
 
-        got = argsmax(arr)
+        got = argsmax2(arr)
         expected = [
             [1, 2, 4],
             [0, 4],

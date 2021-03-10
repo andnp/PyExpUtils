@@ -107,7 +107,7 @@ def downsample(arr: Sequence[AnyNumber], percent: Optional[float] = None, num: O
         raise Exception()
 
 @njit(cache=True)
-def _argsmax(arr: Union[typed.List, np.ndarray]):
+def argsmax(arr: Union[typed.List, np.ndarray]):
     ties: List[int] = [0 for _ in range(0)]  # <-- trick njit into knowing the type of this empty list
     top: float = arr[0]
 
@@ -128,17 +128,9 @@ def _argsmax(arr: Union[typed.List, np.ndarray]):
     return ties
 
 @njit(cache=True)
-def _argsmax2(arr: np.ndarray):
+def argsmax2(arr: np.ndarray):
     ties: List[List[int]] = []
     for i in range(arr.shape[0]):
-        ties.append(_argsmax(arr[i]))
+        ties.append(argsmax(arr[i]))
 
     return ties
-
-@jit(cache=True, forceobj=True)
-def argsmax(arr: Union[typed.List, np.ndarray]):
-    arr = np.array(arr)
-    if len(arr.shape) == 1:
-        return _argsmax(arr)
-
-    return _argsmax2(arr)
