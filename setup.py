@@ -7,7 +7,7 @@ setup(
     author_email='andnpatterson@gmail.com',
     packages=find_packages(exclude=['tests*']),
     install_requires=['numba'],
-    version=2.7,
+    version=2.8,
     license='MIT',
     description='A small set of utilities for RL and ML experiments',
     long_description='todo',
