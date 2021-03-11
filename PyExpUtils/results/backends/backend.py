@@ -39,7 +39,7 @@ class BaseResult:
     # internal method that should be overridden to match expected data format
     # or to signal a null / missing result
     @abstractmethod
-    def _default(self) -> Any:
+    def _default(self) -> np.ndarray:
         pass
 
     # cache the data after loading once
@@ -50,6 +50,9 @@ class BaseResult:
 
         try:
             self._data = self._load()
+            if self._data is None:
+                raise Exception('Data did not load successfully')
+
             return self._data
         except Exception:
             print('Result not found :: ' + self.path)

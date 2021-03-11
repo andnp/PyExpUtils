@@ -1,56 +1,26 @@
 import h5py
 import numpy as np
 from PyExpUtils.results.indices import listIndices
-from typing import Any, Dict, Sequence, Type, Union
+from typing import Any, Dict, List, Sequence, Type, Union
+from PyExpUtils.utils.cache import Cache
 from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.utils.csv import buildCsvParams
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 class H5Result(BaseResult):
-    def __init__(self, path: str, exp: ExperimentDescription, idx: int, data: Any, uneven: bool = False):
+    def __init__(self, path: str, exp: ExperimentDescription, idx: int):
         super().__init__(path, exp, idx)
 
-        self._data = data
-
-        if uneven:
-            self._data = _padUneven(data, np.nan)
-
     def _load(self):
-        if self._data is None:
-            raise Exception('theoretically unreachable code')
+        f = h5py.File(self.path, 'r')
+        key = buildCsvParams(self.exp, self.idx)
 
-        return self._data
-
-    # in this case we can't lazy load, so this is just a pass-through
-    def load(self):
-        return self._load()
-
-    def mean(self) -> np.ndarray:
-        return np.nanmean(self.load(), axis=0)
-
-    def runs(self):
-        return self.load().shape[0]
-
-    def stderr(self) -> np.ndarray:
-        return np.nanstd(self.load(), axis=0, ddof=1) / np.sqrt(self.runs())
-
-# TODO: consider if there is a meaningful cache that we can do here
-def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cache: bool = True, ResultClass: Type[H5Result] = H5Result):
-    context = exp.buildSaveContext(0, base=base)
-    path = context.resolve(filename)
-
-    data = h5py.File(path, 'r')
-
-    for idx in listIndices(exp):
-        # use the parameter settings to get the group
-        key = buildCsvParams(exp, idx)
-        group = data[key]
-
+        group = f[key]
         num_runs = len(group)
 
         if num_runs == 0:
             print('Result not found: ', key)
-            continue
+            return
 
         # set up a placeholder for data that can hold run data
         # in order
@@ -74,10 +44,37 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cac
 
         # convert from dictionary to ordered list
         final_data = [all_data[run] for run in sorted(all_data.keys())]
+        if uneven:
+            final_data = _padUneven(final_data, np.nan)
 
-        yield ResultClass(path, exp, idx, final_data, uneven)
+        f.close()
 
-    data.close()
+        return final_data
+
+    def _default(self) -> np.ndarray:
+        return np.zeros(0)
+
+    def mean(self) -> np.ndarray:
+        return np.nanmean(self.load(), axis=0)
+
+    def runs(self):
+        return self.load().shape[0]
+
+    def stderr(self) -> np.ndarray:
+        return np.nanstd(self.load(), axis=0, ddof=1) / np.sqrt(self.runs())
+
+_result_cache = Cache[List[H5Result]]()
+
+# TODO: consider if there is a meaningful cache that we can do here
+def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cache: bool = True, ResultClass: Type[H5Result] = H5Result):
+    context = exp.buildSaveContext(0, base=base)
+    path = context.resolve(filename)
+
+    generator = (ResultClass(path, exp, idx) for idx in listIndices(exp))
+    if cache:
+        return _result_cache.get(path, lambda path: list(generator))
+
+    return generator
 
 def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './'):
     save_context = exp.buildSaveContext(idx, base=base)

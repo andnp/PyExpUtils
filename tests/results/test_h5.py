@@ -81,7 +81,7 @@ class TestResults(unittest.TestCase):
         path = H5Backend.saveSequentialRuns(exp, 0, 'test2', uneven_dummy, base=base)
         self.registerFile(path)
 
-        results = H5Backend.loadResults(exp, 'test2.h5', base=base, cache=False)
+        results = H5Backend.loadResults(exp, 'test2.h5', base=base)
         results = list(results)
 
         result = results[0]
@@ -101,7 +101,7 @@ class TestResults(unittest.TestCase):
         path = H5Backend.saveSequentialRuns(exp, 1, 'test3', dummy2, base=base)
         self.registerFile(path)
 
-        results = H5Backend.loadResults(exp, 'test3.h5', base=base, cache=False)
+        results = H5Backend.loadResults(exp, 'test3.h5', base=base)
         results = list(results)
 
         # check first result (alpha=0.01)
