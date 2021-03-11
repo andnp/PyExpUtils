@@ -1,2 +1,4 @@
 mypy>=0.770
 numba>=0.52.0
+h5py>=3.1.0
+filelock>=3.0.0

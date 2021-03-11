@@ -6,6 +6,7 @@ from PyExpUtils.utils.dict import equal, get, partialEqual
 from PyExpUtils.results.backends.backend import BaseResult, ResultList, DuckResult
 import PyExpUtils.results.backends.csv as CsvBackend
 import PyExpUtils.results.backends.numpy as NumpyBackend
+import PyExpUtils.results.backends.h5 as H5Backend
 
 """doc
 Returns an iterator over all results that are expected to exist given a particular experiment.
@@ -25,6 +26,8 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
     # first check the file ending to get a hint
     if result_file.endswith('.npy'):
         backend = 'numpy'
+    elif result_file.endswith('.h5'):
+        backend = 'h5'
 
     # but override that if a class is specified
     # trust the caller knows what they're doing if this is specified
@@ -34,11 +37,17 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
     elif issubclass(ResultClass, CsvBackend.Result):
         return CsvBackend.loadResults(exp, result_file, base, cache, ResultClass)
 
+    elif issubclass(ResultClass, H5Backend.H5Result):
+        return H5Backend.loadResults(exp, result_file, base, cache, ResultClass)
+
     if backend == 'csv':
         return CsvBackend.loadResults(exp, result_file, base, cache)
 
     elif backend == 'numpy':
         return NumpyBackend.loadResults(exp, result_file, base, cache)
+
+    elif backend == 'h5':
+        return H5Backend.loadResults(exp, result_file, base, cache)
 
     else:
         raise NotImplementedError(f'Unknown backend encountered: {backend}')

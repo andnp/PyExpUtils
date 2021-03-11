@@ -110,3 +110,4 @@ class TestPaths(unittest.TestCase):
 
         self.assertListEqual(got, expected)
         os.remove('.tmp_test_listMissingResults_archive.tar')
+        shutil.rmtree('.tmp_test_listMissingResults_archive')

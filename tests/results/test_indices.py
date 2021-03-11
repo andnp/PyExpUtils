@@ -44,10 +44,10 @@ class TestIndices(unittest.TestCase):
         })
 
         mock_data = [
-            '.tmp/test_files/gridworld/alpha-0.01_lambda-1.0/0', # 0
-            '.tmp/test_files/gridworld/alpha-0.01_lambda-1.0/1', # 4
-            '.tmp/test_files/gridworld/alpha-0.01_lambda-0.99/0', # 1
-            '.tmp/test_files/gridworld/alpha-0.02_lambda-1.0/0', # 2
+            '.tmp/test_files/gridworld/alpha-0.01_lambda-1.0/0',   # 0
+            '.tmp/test_files/gridworld/alpha-0.01_lambda-1.0/1',   # 4
+            '.tmp/test_files/gridworld/alpha-0.01_lambda-0.99/0',  # 1
+            '.tmp/test_files/gridworld/alpha-0.02_lambda-1.0/0',   # 2
         ]
 
         for path in mock_data:
@@ -69,10 +69,10 @@ class TestIndices(unittest.TestCase):
         })
 
         mock_data = [
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/0', # 0
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/1', # 4
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-0.99/0', # 1
-            '.tmp/test_archive/gridworld/alpha-0.02_lambda-1.0/0', # 2
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/0',   # 0
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/1',   # 4
+            '.tmp/test_archive/gridworld/alpha-0.01_lambda-0.99/0',  # 1
+            '.tmp/test_archive/gridworld/alpha-0.02_lambda-1.0/0',   # 2
         ]
 
         with tarfile.open('.tmp.tar', 'a') as tar:

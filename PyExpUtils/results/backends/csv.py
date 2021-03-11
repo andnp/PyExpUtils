@@ -1,4 +1,5 @@
 import numpy as np
+from filelock import FileLock
 from typing import Any, Callable, Dict, List, Optional, Type
 from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.results.indices import listIndices
@@ -156,7 +157,8 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
     csv_params = buildCsvParams(exp, idx)
     run = exp.getRun(idx)
 
-    with open(csv_file, 'a+') as f:
-        f.write(f'{csv_params},{run},{csv_data}\n')
+    with FileLock(csv_file + '.lock'):
+        with open(csv_file, 'a+') as f:
+            f.write(f'{csv_params},{run},{csv_data}\n')
 
     return csv_file
