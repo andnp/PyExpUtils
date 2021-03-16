@@ -69,6 +69,10 @@ class TestResults(unittest.TestCase):
         expected = np.array([2, 3, 4, 5, 6])
         self.assertTrue(np.allclose(got, expected))
 
+        got = result.stderr()
+        expected = np.array([0.57735027, 0.57735027, 0.57735027, 0.57735027, 0.57735027])
+        self.assertTrue(np.allclose(got, expected))
+
         # ----------------------
         # Can handle uneven data
         # ----------------------

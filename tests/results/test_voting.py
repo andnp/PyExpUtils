@@ -82,7 +82,6 @@ class TestVoting(unittest.TestCase):
             RankedCandidate(5, 1, 32),
             RankedCandidate(3, 1, 25),
             RankedCandidate(0, 2, 20),
-            RankedCandidate(8, 3, np.nan),
         ]
 
         got = confidenceRanking(scores, stderrs=1, prefer='big')
@@ -93,7 +92,6 @@ class TestVoting(unittest.TestCase):
             RankedCandidate(3, 1, 25),
             RankedCandidate(5, 1, 32),
             RankedCandidate(4, 2, 63),
-            RankedCandidate(8, 3, np.nan),
         ]
 
         got = confidenceRanking(scores, stderrs=1, prefer='small')
@@ -113,7 +111,6 @@ class TestVoting(unittest.TestCase):
             RankedCandidate(5, 1, 32),
             RankedCandidate(3, 2, 25),
             RankedCandidate(0, 3, 20),
-            RankedCandidate(8, 4, np.nan),
         ]
 
         got = scoreRanking(scores, prefer='big')

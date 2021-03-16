@@ -58,7 +58,7 @@ class H5Result(BaseResult):
         return np.nanmean(self.load(), axis=0)
 
     def runs(self):
-        return self.load().shape[0]
+        return len(self.load())
 
     def stderr(self) -> np.ndarray:
         return np.nanstd(self.load(), axis=0, ddof=1) / np.sqrt(self.runs())

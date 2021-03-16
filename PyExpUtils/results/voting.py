@@ -62,7 +62,13 @@ def inRange(a: Tuple[float, float], b: Tuple[float, float]):
 
     return False
 
+def filterNans(scores: List[ScoredCandidate]):
+    return list(filter(lambda s: not np.isnan(s.score), scores))
+
 def confidenceRanking(scores: List[ScoredCandidate], stderrs: float = 2.0, prefer: str = 'big'):
+    # this method just ignores null results
+    scores = filterNans(scores)
+
     if prefer == 'big':
         ordered = sorted(scores, key=lambda x: x.score, reverse=True)
     else:
@@ -83,6 +89,9 @@ def confidenceRanking(scores: List[ScoredCandidate], stderrs: float = 2.0, prefe
     return ranks
 
 def scoreRanking(scores: List[ScoredCandidate], prefer: str = 'big'):
+    # this method just ignores null results
+    scores = filterNans(scores)
+
     if prefer == 'big':
         ordered = sorted(scores, key=lambda x: x.score, reverse=True)
     else:
