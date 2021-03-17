@@ -127,3 +127,28 @@ class TestResults(unittest.TestCase):
         got = result2.mean()
         expected = np.array([3, 4, 5, 6, 7])
         self.assertTrue(np.allclose(got, expected))
+
+    def test_detectMissingResults(self):
+        base = f'{self.getBase()}/test_detectMissingResults'
+
+        dummy = np.array([
+            [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            [3, 4, 5, 6, 7],
+        ])
+
+        dummy2 = dummy * 2
+
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': [0.01, 0.02, 0.03, 0.04] } }, save_key='')
+
+        path = H5Backend.saveSequentialRuns(exp, 0, 'test1', dummy, base=base)
+        path = H5Backend.saveSequentialRuns(exp, 2, 'test1', dummy2, base=base)
+        self.registerFile(path)
+
+        missing = H5Backend.detectMissingIndices(exp, 5, 'test1.h5', base=base)
+        missing = list(missing)
+        # no guarantees about ordering
+        missing = sorted(missing)
+
+        expected = [1, 3, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        self.assertEqual(missing, expected)

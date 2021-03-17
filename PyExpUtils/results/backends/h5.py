@@ -63,6 +63,39 @@ class H5Result(BaseResult):
     def stderr(self) -> np.ndarray:
         return np.nanstd(self.load(), axis=0, ddof=1) / np.sqrt(self.runs())
 
+def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, base: str = './'):
+    context = exp.buildSaveContext(0, base=base)
+    path = context.resolve(filename)
+
+    f = h5py.File(path, 'r')
+
+    params = exp.numPermutations()
+
+    # loop over just the first run of indices to find the right file
+    # then we will loop over secondary indices for this param setting
+    for idx in listIndices(exp):
+        key = buildCsvParams(exp, idx)
+
+        # if we don't see this key at all, then all of the results for this param setting are missing
+        if key not in f:
+            for r in range(runs):
+                yield idx + params * r
+
+        # otherwise we need to check within this group for missing runs
+        else:
+            group = f[key]
+
+            # before we dig into the data (which is costly), check if we can short-circuit out
+            if len(group) == runs:
+                continue
+
+            for r in range(runs):
+                if str(r) not in group:
+                    yield idx + params * r
+
+    f.close()
+
+
 _result_cache = Cache[List[H5Result]]()
 
 # TODO: consider if there is a meaningful cache that we can do here
