@@ -140,7 +140,8 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
     for run, sub in enumerate(data):
         inner_idx = params * run + idx
 
-        final_file = saveResults(exp, inner_idx, filename, sub, base)
+        if sub is not None:
+            final_file = saveResults(exp, inner_idx, filename, sub, base)
 
     return final_file
 

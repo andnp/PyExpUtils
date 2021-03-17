@@ -137,7 +137,12 @@ class TestResults(unittest.TestCase):
             [3, 4, 5, 6, 7],
         ])
 
-        dummy2 = dummy * 2
+        dummy2 = [
+            [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            None,
+            [3, 4, 5, 6, 7],
+        ]
 
         exp = ExperimentDescription({ "metaParameters": { 'alpha': [0.01, 0.02, 0.03, 0.04] } }, save_key='')
 
@@ -150,5 +155,5 @@ class TestResults(unittest.TestCase):
         # no guarantees about ordering
         missing = sorted(missing)
 
-        expected = [1, 3, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        expected = [1, 3, 5, 7, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
         self.assertEqual(missing, expected)
