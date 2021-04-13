@@ -67,7 +67,13 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, b
     context = exp.buildSaveContext(0, base=base)
     path = context.resolve(filename)
 
-    f = h5py.File(path, 'r')
+    # try to open the file. If it doesn't exist, then assume that all results are missing
+    try:
+        f = h5py.File(path, 'r')
+    except Exception:
+        for idx in listIndices(exp):
+            yield idx
+        return
 
     params = exp.numPermutations()
 
