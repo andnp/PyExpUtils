@@ -72,7 +72,7 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, b
     try:
         f = h5py.File(path, 'r')
     except Exception:
-        for idx in listIndices(exp):
+        for idx in listIndices(exp, runs):
             yield idx
         return
 
