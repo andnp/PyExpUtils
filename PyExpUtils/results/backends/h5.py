@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from filelock import FileLock
 from PyExpUtils.results.indices import listIndices
 from typing import Any, Dict, List, Sequence, Type, Union
 from PyExpUtils.utils.cache import Cache
@@ -126,14 +127,15 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
     header = buildCsvParams(exp, idx)
     run = exp.getRun(idx)
 
-    # h5py includes its own file-locking, no special handling need here
-    with h5py.File(h5_file, 'a') as f:
-        if header not in f:
-            grp = f.create_group(header)
-        else:
-            grp = f[header]
+    # h5py's file-locking does not appear to work well
+    with FileLock(h5_file + '.lock'):
+        with h5py.File(h5_file, 'a') as f:
+            if header not in f:
+                grp = f.create_group(header)
+            else:
+                grp = f[header]
 
-        grp.create_dataset(str(run), data=data, compression='lzf')
+            grp.create_dataset(str(run), data=data, compression='lzf')
 
     return h5_file
 
