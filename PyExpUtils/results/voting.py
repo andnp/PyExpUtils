@@ -1,6 +1,7 @@
 from PyExpUtils.utils.dict import pick
 from copy import deepcopy
 import numpy as np
+from numba import njit
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.results import ResultList, Reducer, whereParametersEqual
 from PyExpUtils.utils.types import T
@@ -130,10 +131,7 @@ def countVotes(ballots: List[RankedBallot]):
 def firstPastPost(ballots: List[RankedBallot]) -> Name:
     votes = countVotes(ballots)
 
-    vals = list(votes.values())
-    ma: int = np.max(vals)
-
-    return findKey(votes, ma)
+    return dictMax(votes)[1]
 
 def instantRunoff(ballots: List[RankedBallot]) -> Name:
     # the code is simpler if we modify in place
@@ -185,54 +183,105 @@ def instantRunoff(ballots: List[RankedBallot]) -> Name:
         # then bump all ranks up one
         if ballot[loser].rank == 0 and len(getCandidatesByRank(ballot, 0)) == 1:
             for name in ballot:
-                ballot[name] = RankedCandidate(name, np.max((0, ballot[name].rank - 1)), ballot[name].score)
+                ballot[name] = RankedCandidate(name, max(0, ballot[name].rank - 1), ballot[name].score)
 
         del ballot[loser]
 
     # run the vote again with the modified ballots
     return instantRunoff(ballots)
 
-def condorcet(ballots: List[RankedBallot]) -> Name:
+@njit(cache=True)
+def computeVoteMatrix(ranks: np.ndarray):
+    n = len(ranks)
+    matrix = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                continue
+
+            # a loses to b
+            if ranks[i] > ranks[j]:
+                matrix[j, i] = 1
+
+            # b loses to a
+            elif ranks[j] > ranks[i]:
+                matrix[i, j] = 1
+
+    return matrix
+
+@njit(cache=True)
+def copelandScore(sum_matrix: np.ndarray):
+    scores = np.zeros(sum_matrix.shape[0])
+
+    for i in range(len(scores)):
+        for j in range(len(scores)):
+            if i == j:
+                continue
+
+            if sum_matrix[i, j] > sum_matrix[j, i]:
+                scores[i] += 1
+
+            elif sum_matrix[i, j] == sum_matrix[j, i]:
+                scores[i] += 0.5
+
+    return scores
+
+def sumMatrix(ballots: List[RankedBallot], names: List[Name]) -> np.ndarray:
+    n = len(names)
+
+    sum_matrix = np.zeros((n, n))
+    for ballot in ballots:
+        # ensure we pass ranks in order *by name*
+        ranks = np.array([ballot[name].rank for name in names])
+        sum_matrix += computeVoteMatrix(ranks)
+
+    return sum_matrix
+
+def small(ballots: List[RankedBallot]) -> Name:
     # the code is simpler if we modify in place
     # so create a copy so that we don't mess with the sender's object
     ballots = deepcopy(ballots)
 
+    # order is arbitrary, but *must* be consistent
     names = list(ballots[0].keys())
-    n = len(names)
+    sum_matrix = sumMatrix(ballots, names)
+    copeland_scores = copelandScore(sum_matrix)
 
-    vote_matrices = np.zeros((len(ballots), n, n))
-    for i, ballot in enumerate(ballots):
-        for j, a in enumerate(names):
-            for k, b in enumerate(names):
-                # candidates can't compete with themselves
-                if a == b:
-                    continue
+    winners = argsMax(copeland_scores)
+    winner_names = [names[idx] for idx in winners]
 
-                if ballot[a].rank > ballot[b].rank:
-                    vote_matrices[i, k, j] = 1
+    # if we have a singular winner, we are done
+    if len(winners) == 1:
+        return winner_names[0]
 
-                elif ballot[b].rank > ballot[a].rank:
-                    vote_matrices[i, j, k] = 1
+    # otherwise, iterate over all of the worst performers and delete them
+    # then try again
+    rest = [name for name in names if name not in winner_names]
+    for loser in rest:
+        for ballot in ballots:
+            del ballot[loser]
 
-    sum_matrix = vote_matrices.sum(axis=0)
-    totals = sum_matrix + sum_matrix.T
-    wins = np.sum((sum_matrix - (totals / 2)) > 0, axis=1)
-    ma: int = np.max(wins)
+    return small(ballots)
 
-    # if we have a condorcet winner, then return them
-    # they win if they won against everyone except themselves
-    if ma == n - 1:
-        idx = np.argmax(wins)
-        return names[int(idx)]
+def raynaud(ballots: List[RankedBallot]) -> Name:
+    ballots = deepcopy(ballots)
 
-    # otherwise, delete the worst candidate and try again
-    idx = np.argmin(wins)
+    names = list(ballots[0].keys())
 
-    loser = names[int(idx)]
+    if len(names) == 1:
+        return names[0]
+
+    sum_matrix = sumMatrix(ballots, names)
+
+    ma = np.max(sum_matrix)
+    _, col = np.where(sum_matrix == ma)
+
+    loser = names[col[0]]
     for ballot in ballots:
         del ballot[loser]
 
-    return condorcet(ballots)
+    return raynaud(ballots)
 
 # ---------------------
 # Local utility methods
@@ -260,3 +309,24 @@ def findAllKeys(obj: Dict[Name, T], val: T) -> List[Name]:
             ret.append(key)
 
     return ret
+
+def dictMax(d: Dict[Name, int]):
+    vals = list(d.values())
+    ma: int = np.max(vals)
+
+    amax = findKey(d, ma)
+
+    return ma, amax
+
+def argsMax(arr: np.ndarray):
+    ties: List[int] = []
+    ma: float = -np.inf
+
+    for i, a in enumerate(arr):
+        if a > ma:
+            ties = [i]
+            ma = a
+        elif a == ma:
+            ties.append(i)
+
+    return ties

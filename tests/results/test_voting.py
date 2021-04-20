@@ -1,6 +1,8 @@
+from typing import List, Tuple
 import unittest
 import numpy as np
-from PyExpUtils.results.voting import RankedCandidate, ScoredCandidate, buildBallot, condorcet, confidenceRanking, firstPastPost, instantRunoff, scoreRanking
+import copy
+from PyExpUtils.results.voting import RankedBallot, RankedCandidate, ScoredCandidate, buildBallot, raynaud, small, confidenceRanking, firstPastPost, instantRunoff, scoreRanking
 
 def fakeElection1():
     return [
@@ -67,6 +69,116 @@ def fakeElection2():
         ]),
     ]
 
+def buildByProportion(ballotPairs: List[Tuple[float, RankedBallot]], total: int):
+    ballots: List[RankedBallot] = []
+
+    for pair in ballotPairs:
+        proportion, ballot = pair
+
+        num = int(proportion * total)
+        for _ in range(num):
+            ballots.append(copy.deepcopy(ballot))
+
+    return ballots
+
+# taken from http://www.cs.angelo.edu/~rlegrand/rbvote/desc.html
+def fakeElection3():
+    return buildByProportion([
+
+        (0.098, buildBallot([
+            RankedCandidate('Abby', 0),
+            RankedCandidate('Cora', 1),
+            RankedCandidate('Erin', 2),
+            RankedCandidate('Dave', 3),
+            RankedCandidate('Brad', 4),
+        ])),
+        (0.064, buildBallot([
+            RankedCandidate('Brad', 0),
+            RankedCandidate('Abby', 1),
+            RankedCandidate('Erin', 2),
+            RankedCandidate('Cora', 3),
+            RankedCandidate('Dave', 4),
+        ])),
+        (0.012, buildBallot([
+            RankedCandidate('Brad', 0),
+            RankedCandidate('Abby', 1),
+            RankedCandidate('Erin', 2),
+            RankedCandidate('Dave', 3),
+            RankedCandidate('Cora', 4),
+        ])),
+        (0.098, buildBallot([
+            RankedCandidate('Brad', 0),
+            RankedCandidate('Erin', 1),
+            RankedCandidate('Abby', 2),
+            RankedCandidate('Cora', 3),
+            RankedCandidate('Dave', 4),
+        ])),
+        (0.013, buildBallot([
+            RankedCandidate('Brad', 0),
+            RankedCandidate('Erin', 1),
+            RankedCandidate('Abby', 2),
+            RankedCandidate('Dave', 3),
+            RankedCandidate('Cora', 4),
+        ])),
+        (0.125, buildBallot([
+            RankedCandidate('Brad', 0),
+            RankedCandidate('Erin', 1),
+            RankedCandidate('Dave', 2),
+            RankedCandidate('Abby', 3),
+            RankedCandidate('Cora', 4),
+        ])),
+        (0.124, buildBallot([
+            RankedCandidate('Cora', 0),
+            RankedCandidate('Abby', 1),
+            RankedCandidate('Erin', 2),
+            RankedCandidate('Dave', 3),
+            RankedCandidate('Brad', 4),
+        ])),
+        (0.076, buildBallot([
+            RankedCandidate('Cora', 0),
+            RankedCandidate('Erin', 1),
+            RankedCandidate('Abby', 2),
+            RankedCandidate('Dave', 3),
+            RankedCandidate('Brad', 4),
+        ])),
+        (0.021, buildBallot([
+            RankedCandidate('Dave', 0),
+            RankedCandidate('Abby', 1),
+            RankedCandidate('Brad', 2),
+            RankedCandidate('Erin', 3),
+            RankedCandidate('Cora', 4),
+        ])),
+        (0.030, buildBallot([
+            RankedCandidate('Dave', 0),
+            RankedCandidate('Brad', 1),
+            RankedCandidate('Abby', 2),
+            RankedCandidate('Erin', 3),
+            RankedCandidate('Cora', 4),
+        ])),
+        (0.098, buildBallot([
+            RankedCandidate('Dave', 0),
+            RankedCandidate('Brad', 1),
+            RankedCandidate('Erin', 2),
+            RankedCandidate('Cora', 3),
+            RankedCandidate('Abby', 4),
+        ])),
+        (0.139, buildBallot([
+            RankedCandidate('Dave', 0),
+            RankedCandidate('Cora', 1),
+            RankedCandidate('Abby', 2),
+            RankedCandidate('Brad', 3),
+            RankedCandidate('Erin', 4),
+        ])),
+        (0.023, buildBallot([
+            RankedCandidate('Dave', 0),
+            RankedCandidate('Cora', 1),
+            RankedCandidate('Brad', 2),
+            RankedCandidate('Abby', 3),
+            RankedCandidate('Erin', 4),
+        ])),
+
+    ], 1000)
+
 class TestVoting(unittest.TestCase):
     def test_confidenceRanking(self):
         scores = [
@@ -125,6 +237,10 @@ class TestVoting(unittest.TestCase):
         winner = instantRunoff(ballots)
         self.assertEqual(winner, 3)
 
+        ballots = fakeElection3()
+        winner = instantRunoff(ballots)
+        self.assertEqual(winner, 'Brad')
+
     def test_firstPastPost(self):
         ballots = fakeElection1()
         winner = firstPastPost(ballots)
@@ -134,11 +250,32 @@ class TestVoting(unittest.TestCase):
         winner = firstPastPost(ballots)
         self.assertEqual(winner, 5)
 
-    def test_condorcet(self):
+        ballots = fakeElection3()
+        winner = firstPastPost(ballots)
+        self.assertEqual(winner, 'Brad')
+
+    def test_small(self):
         ballots = fakeElection1()
-        winner = condorcet(ballots)
+        winner = small(ballots)
         self.assertEqual(winner, 4)
 
         ballots = fakeElection2()
-        winner = condorcet(ballots)
+        winner = small(ballots)
         self.assertEqual(winner, 4)
+
+        ballots = fakeElection3()
+        winner = small(ballots)
+        self.assertEqual(winner, 'Brad')
+
+    def test_raynaud(self):
+        ballots = fakeElection1()
+        winner = raynaud(ballots)
+        self.assertEqual(winner, 4)
+
+        ballots = fakeElection2()
+        winner = raynaud(ballots)
+        self.assertEqual(winner, 4)
+
+        ballots = fakeElection3()
+        winner = raynaud(ballots)
+        self.assertEqual(winner, 'Abby')
