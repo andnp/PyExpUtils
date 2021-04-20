@@ -5,7 +5,7 @@ from numba import njit
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.results import ResultList, Reducer, whereParametersEqual
 from PyExpUtils.utils.types import T
-from typing import Dict, List, NamedTuple, Tuple, Union
+from typing import Dict, List, NamedTuple, Tuple, Union, cast
 
 Name = Union[int, str]
 
@@ -137,11 +137,13 @@ def highScore(ballots: List[RankedBallot], prefer: str = 'big') -> Name:
         for ballot in ballots:
             scores[i] += ballot[name].score
 
-    idx: int = -1
     if prefer == 'big':
         idx = np.argmax(scores)
     else:
         idx = np.argmin(scores)
+
+    # numpy types are getting worse
+    idx = cast(int, idx)
 
     return names[idx]
 
