@@ -137,6 +137,7 @@ def highScore(ballots: List[RankedBallot], prefer: str = 'big') -> Name:
         for ballot in ballots:
             scores[i] += ballot[name].score
 
+    idx: int = -1
     if prefer == 'big':
         idx = np.argmax(scores)
     else:
