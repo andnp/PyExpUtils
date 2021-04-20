@@ -128,6 +128,22 @@ def countVotes(ballots: List[RankedBallot]):
 
     return votes
 
+def highScore(ballots: List[RankedBallot], prefer: str = 'big') -> Name:
+    names = list(ballots[0].keys())
+
+    scores = np.zeros(len(names))
+
+    for i, name in enumerate(names):
+        for ballot in ballots:
+            scores[i] += ballot[name].score
+
+    if prefer == 'big':
+        idx = np.argmax(scores)
+    else:
+        idx = np.argmin(scores)
+
+    return names[idx]
+
 def firstPastPost(ballots: List[RankedBallot]) -> Name:
     votes = countVotes(ballots)
 
@@ -238,7 +254,7 @@ def sumMatrix(ballots: List[RankedBallot], names: List[Name]) -> np.ndarray:
 
     return sum_matrix
 
-def small(ballots: List[RankedBallot]) -> Name:
+def small(ballots: List[RankedBallot], prefer: str = 'big') -> Name:
     # the code is simpler if we modify in place
     # so create a copy so that we don't mess with the sender's object
     ballots = deepcopy(ballots)
@@ -255,9 +271,16 @@ def small(ballots: List[RankedBallot]) -> Name:
     if len(winners) == 1:
         return winner_names[0]
 
+    # we could end up with a tie, which needs to broken arbitrarily
+    # we pick the highest (by default) score
+    rest = [name for name in names if name not in winner_names]
+
+    # there was a tie which could not be resolved
+    if len(rest) == 0:
+        return highScore(ballots, prefer=prefer)
+
     # otherwise, iterate over all of the worst performers and delete them
     # then try again
-    rest = [name for name in names if name not in winner_names]
     for loser in rest:
         for ballot in ballots:
             del ballot[loser]

@@ -63,7 +63,7 @@ def fakeElection2():
         buildBallot([
             RankedCandidate(0, 0, 66),
             RankedCandidate(3, 1, 34),
-            RankedCandidate(4, 1, 33),
+            RankedCandidate(4, 2, 33),
             RankedCandidate(5, 2, 32),
             RankedCandidate(8, 3, np.nan),
         ]),
@@ -274,7 +274,7 @@ class TestVoting(unittest.TestCase):
 
         ballots = fakeElection2()
         winner = raynaud(ballots)
-        self.assertEqual(winner, 4)
+        self.assertEqual(winner, 3)
 
         ballots = fakeElection3()
         winner = raynaud(ballots)
