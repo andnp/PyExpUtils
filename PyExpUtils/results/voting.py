@@ -143,9 +143,9 @@ def highScore(ballots: List[RankedBallot], prefer: str = 'big') -> Name:
         idx = np.argmin(scores)
 
     # numpy types are getting worse
-    idx = cast(int, idx)
+    i = cast(int, idx)
 
-    return names[idx]
+    return names[i]
 
 def firstPastPost(ballots: List[RankedBallot]) -> Name:
     votes = countVotes(ballots)
