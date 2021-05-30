@@ -1,0 +1,3 @@
+from PyExpUtils.utils.types import T
+
+def jitclass(f: T) -> T: ...
