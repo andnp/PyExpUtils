@@ -9,7 +9,7 @@ class TestCircularBuffer(unittest.TestCase):
 
         buffer.add(1)
         x = buffer.sample(1)
-        self.assertEqual(x, 1)
+        self.assertEqual(x, [1])
 
         buffer.add(2)
         x = buffer.sample(2)
