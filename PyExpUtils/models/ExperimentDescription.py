@@ -75,20 +75,21 @@ class ExperimentDescription:
     """doc
     Gives the `i`'th permutation of sweepable parameters.
     Handles wrapping indices, so can perform multiple runs of the same parameter setting by setting `i` large.
+    Returns the entire dictionary, not just the sub-dictionary containing the permutation.
 
     In the above dictionary, there are 16 total parameter permutations.
     ```python
     params = exp.getPermutation(0)
-    print(params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
+    print(params['metaParameters']) # -> { 'alpha': 1.0, 'lambda': 1.0 }
 
     params = exp.getPermutation(1)
-    print(params) # -> { 'alpha': 1.0, 'lambda': 0.99 }
+    print(params['metaParameters']) # -> { 'alpha': 1.0, 'lambda': 0.99 }
 
     params = exp.getPermutation(15)
-    print(params) # -> { 'alpha': 0.125, 'lambda': 0.96 }
+    print(params['metaParameters']) # -> { 'alpha': 0.125, 'lambda': 0.96 }
 
     params = exp.getPermutation(16)
-    print(params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
+    print(params['metaParameters']) # -> { 'alpha': 1.0, 'lambda': 1.0 }
     ```
     """
     def getPermutation(self, idx: int):

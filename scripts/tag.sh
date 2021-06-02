@@ -33,8 +33,9 @@ NEEDS_TAG=`git describe --contains $GIT_COMMIT`
 
 # only tag if no tag already
 if [ -z "$NEEDS_TAG" ]; then
+    sed -i -E "s/(PyExpUtils\@).+?/\1$NEW_TAG/" docs/GettingStarted.md
     sed -i -E "s/(version=).+?,/\1$NEW_TAG,/" setup.py
-    git add setup.py
+    git add setup.py README.md
     git commit -m "updating to version $NEW_TAG"
     echo "Tagged with $NEW_TAG"
     git tag $NEW_TAG
