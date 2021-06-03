@@ -11,7 +11,7 @@ setup(
         'h5py>=3.1.0',
         'filelock>=3.0.0',
     ],
-    version=2.18,
+    version=2.19,
     license='MIT',
     description='A small set of utilities for RL and ML experiments',
     long_description='todo',
