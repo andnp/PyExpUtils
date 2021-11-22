@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 from filelock import FileLock
 from PyExpUtils.results.indices import listIndices
-from typing import Any, Dict, List, Sequence, Type, Union
+from typing import Any, Dict, List, Sequence, Type, Union, cast
 from PyExpUtils.utils.cache import Cache
 from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.utils.csv import buildCsvParams
@@ -127,6 +127,11 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
     header = buildCsvParams(exp, idx)
     run = exp.getRun(idx)
 
+    # check if the data is a scalar. If so, compression cannot be used
+    # Note: types are incorrect on grp.create_dataset, so a cast is necessary
+    is_scalar = np.ndim(data) == 0
+    compression = cast(str, None if is_scalar else 'lzf')
+
     # h5py's file-locking does not appear to work well
     with FileLock(h5_file + '.lock'):
         with h5py.File(h5_file, 'a') as f:
@@ -135,7 +140,7 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
             else:
                 grp = f[header]
 
-            grp.create_dataset(str(run), data=data, compression='lzf')
+            grp.create_dataset(str(run), data=data, compression=compression)
 
     return h5_file
 
