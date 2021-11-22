@@ -1,4 +1,5 @@
 import re
+from typing import Iterable
 from PyExpUtils.utils.arrays import last
 
 def split(path: str):
@@ -36,7 +37,7 @@ def remoteDuplicatedSlashes(s: str):
 
 def join(*argv: str):
     # remote empty strings
-    gen = filter(lambda s: s != '', argv)
+    gen: Iterable[str] = filter(lambda s: s != '', argv)
     # remote any duplicated slashes, e.g. this//is/a/path
     gen = map(remoteDuplicatedSlashes, gen)
     # get rid of leading/trailing slashes
