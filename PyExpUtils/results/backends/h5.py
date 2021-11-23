@@ -34,8 +34,13 @@ class H5Result(BaseResult):
         # also check if the data is uneven length
         # if so, we will need to handle it specially later on
         for run in group:
-            run_data = group[run][:]
+            # convert to np array
+            run_data = np.asarray(group[run])
             all_data[int(run)] = run_data
+
+            # if the data is scalar, no need to check shapes
+            if np.ndim(run_data) == 0:
+                continue
 
             if length == -1:
                 length = run_data.shape[0]
