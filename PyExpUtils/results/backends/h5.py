@@ -117,7 +117,7 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cac
 
     generator = (ResultClass(path, exp, idx) for idx in listIndices(exp))
     if cache:
-        return _result_cache.get(path, lambda path: list(generator))
+        return (_ for _ in _result_cache.get(path, lambda path: list(generator)))
 
     return generator
 
@@ -149,19 +149,29 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
 
     return h5_file
 
-# TODO: instead of bootstrapping off of saveResults
-# rewrite the logic here to be more efficient with file handles
 def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data: Union[Sequence[Any], np.ndarray], base: str = './'):
-    params = exp.numPermutations()
+    save_context = exp.buildSaveContext(idx, base=base)
+    save_context.ensureExists()
 
-    final_file = ''
-    for run, sub in enumerate(data):
-        inner_idx = params * run + idx
+    if '.' not in filename[-3:]:
+        filename += '.h5'
 
-        if sub is not None:
-            final_file = saveResults(exp, inner_idx, filename, sub, base)
+    h5_file = save_context.resolve(filename)
+    header = buildCsvParams(exp, idx)
 
-    return final_file
+    start_run = exp.getRun(idx)
+    with FileLock(h5_file + '.lock'):
+        with h5py.File(h5_file, 'a') as f:
+            if header not in f:
+                grp = f.create_group(header)
+            else:
+                grp = f[header]
+
+            for r, d in enumerate(data):
+                run = start_run + r
+                grp.create_dataset(str(run), data=d, compression='lzf')
+
+    return h5_file
 
 def _padUneven(data: Sequence[np.ndarray], val: float):
     lens = np.array([len(item) for item in data])

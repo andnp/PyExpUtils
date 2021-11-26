@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 from filelock import FileLock
 from typing import Any, Callable, Dict, List, Optional, Type
 from PyExpUtils.results.backends.backend import BaseResult
@@ -144,7 +145,7 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', cac
 
         yield ResultClass(exp, idx, result)
 
-def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './', precision: Optional[int] = None):
+def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: npt.ArrayLike, base: str = './', precision: Optional[int] = None):
     save_context = exp.buildSaveContext(idx, base=base)
     save_context.ensureExists()
 
@@ -160,5 +161,29 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
     with FileLock(csv_file + '.lock'):
         with open(csv_file, 'a+') as f:
             f.write(f'{csv_params},{run},{csv_data}\n')
+
+    return csv_file
+
+def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './', precision: Optional[int] = None):
+    save_context = exp.buildSaveContext(idx, base=base)
+    save_context.ensureExists()
+
+    if '.' not in filename[-4:]:
+        filename += '.csv'
+
+    csv_file = save_context.resolve(filename)
+    lines = []
+
+    start_run = exp.getRun(idx)
+    csv_params = buildCsvParams(exp, idx)
+    for r, d in enumerate(data):
+        csv_data = arrayToCsv(d, precision)
+
+        run = start_run + r
+        lines.append(f'{csv_params},{run},{csv_data}\n')
+
+    with FileLock(csv_file + '.lock'):
+        with open(csv_file, 'a+') as f:
+            f.writelines(lines)
 
     return csv_file

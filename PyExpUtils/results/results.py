@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 from typing import Any, Callable, Dict, Generator, List, Optional, Type
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.utils.arrays import first
@@ -52,6 +53,18 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
     else:
         raise NotImplementedError(f'Unknown backend encountered: {backend}')
 
+"""doc
+Save a set of results to file, using the file extension to determine the saving backend
+"""
+def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './'):
+    if filename.endswith('.csv'):
+        return CsvBackend.saveResults(exp, idx, filename, data, base)
+    elif filename.endswith('.npy'):
+        return NumpyBackend.saveResults(exp, idx, filename, data, base)
+    elif filename.endswith('.h5'):
+        return H5Backend.saveResults(exp, idx, filename, data, base)
+
+    raise NotImplementedError(f'Unknown backend encountered: {filename}')
 
 """doc
 Utility function for sorting results into bins based on values of a metaParameter.

@@ -1,5 +1,7 @@
+import numpy as np
+import numpy.typing as npt
 from PyExpUtils.utils.arrays import unwrap
-from typing import Any, Callable, List, Optional, Sequence
+from typing import Any, Callable, Iterable, List, Optional
 from PyExpUtils.utils.dict import flatKeys, get, pick
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
@@ -24,7 +26,7 @@ def buildCsvHeader(exp: ExperimentDescription):
 def buildPrecisionStr(p: float):
     return ('{:.' + str(p) + 'f}').format
 
-def arrayToCsv(data: Sequence[Any], precision: Optional[int] = None):
+def arrayToCsv(data: npt.ArrayLike, precision: Optional[int] = None):
     if precision is None:
         toStr: Callable[[Any], str] = str
     elif precision == 0:
@@ -32,4 +34,8 @@ def arrayToCsv(data: Sequence[Any], precision: Optional[int] = None):
     else:
         toStr = buildPrecisionStr(precision)
 
+    if np.ndim(data) == 0:
+        return toStr(data)
+
+    assert isinstance(data, Iterable)
     return ','.join(map(toStr, data))
