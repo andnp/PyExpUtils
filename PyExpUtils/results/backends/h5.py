@@ -159,6 +159,11 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
     h5_file = save_context.resolve(filename)
     header = buildCsvParams(exp, idx)
 
+    # check if the data is a scalar. If so, compression cannot be used
+    # Note: types are incorrect on grp.create_dataset, so a cast is necessary
+    is_scalar = np.ndim(data) == 0
+    compression = cast(str, None if is_scalar else 'lzf')
+
     start_run = exp.getRun(idx)
     with FileLock(h5_file + '.lock'):
         with h5py.File(h5_file, 'a') as f:
@@ -169,7 +174,7 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
 
             for r, d in enumerate(data):
                 run = start_run + r
-                grp.create_dataset(str(run), data=d, compression='lzf')
+                grp.create_dataset(str(run), data=d, compression=compression)
 
     return h5_file
 
