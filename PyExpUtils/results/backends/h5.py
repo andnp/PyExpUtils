@@ -173,6 +173,8 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
                 grp = f[header]
 
             for r, d in enumerate(data):
+                if d is None: continue
+
                 run = start_run + r
                 grp.create_dataset(str(run), data=d, compression=compression)
 
