@@ -13,12 +13,14 @@ def build(d: Dict[str, Any]):
     # optional
     delay = d.get('delay')
     sshloginfile = d.get('sshloginfile')
+    batch = d.get('batch')
 
     # build parameter pairs
     pairs = [
         ('-j', cores),
         ('--delay', delay),
         ('--sshloginfile', sshloginfile),
+        ('-n', batch),
     ]
 
     # build parallel options
