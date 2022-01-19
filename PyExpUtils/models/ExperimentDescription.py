@@ -2,7 +2,7 @@ from PyExpUtils.utils.arrays import unwrap
 import json
 import os
 import PyExpUtils.utils.path as Path
-from PyExpUtils.utils.permute import getParameterPermutation, getNumberOfPermutations
+from PyExpUtils.utils.permute import Record, getParameterPermutation, getNumberOfPermutations
 from PyExpUtils.utils.dict import merge, hyphenatedStringify, pick
 from PyExpUtils.utils.str import interpolate
 from PyExpUtils.models.Config import getConfig
@@ -38,6 +38,10 @@ class ExperimentDescription:
         self.path = path
         # interpolation key for saving
         self.save_key = save_key
+
+        # cached data
+        self._num_perms: Optional[int] = None
+        self._perms: Dict[int, Record] = {}
 
     # get the keys to permute over
     def getKeys(self, keys: Optional[Keys] = None):
@@ -92,9 +96,18 @@ class ExperimentDescription:
     ```
     """
     def getPermutation(self, idx: int):
+        # we can freely rotate the idx without changing the permutation
+        # allows us to upper-bound number of cache entries
+        idx = idx % self.numPermutations()
+
+        if idx in self._perms:
+            return self._perms[idx]
+
         sweeps = self.permutable()
         permutation = getParameterPermutation(sweeps, idx)
         d = merge(self._d, permutation)
+
+        self._perms[idx] = d
 
         return d
 
@@ -107,8 +120,13 @@ class ExperimentDescription:
     ```
     """
     def numPermutations(self):
+        if self._num_perms is not None:
+            return self._num_perms
+
         sweeps = self.permutable()
-        return getNumberOfPermutations(sweeps)
+        self._num_perms = getNumberOfPermutations(sweeps)
+
+        return self._num_perms
 
     """doc
     Get the run number based on wrapping the index.
