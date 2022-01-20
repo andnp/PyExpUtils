@@ -1,8 +1,9 @@
-from PyExpUtils.utils.arrays import unwrap
 import json
 import os
+import copy
 import PyExpUtils.utils.path as Path
-from PyExpUtils.utils.permute import Record, getParameterPermutation, getNumberOfPermutations
+from PyExpUtils.utils.arrays import unwrap
+from PyExpUtils.utils.permute import KVPair, Record, getCountFromPairs, _flattenToKeyValues, getPermutationFromPairs
 from PyExpUtils.utils.dict import merge, hyphenatedStringify, pick
 from PyExpUtils.utils.str import interpolate
 from PyExpUtils.models.Config import getConfig
@@ -41,7 +42,7 @@ class ExperimentDescription:
 
         # cached data
         self._num_perms: Optional[int] = None
-        self._perms: Dict[int, Record] = {}
+        self._pairs: Optional[List[KVPair]] = None
 
     # get the keys to permute over
     def getKeys(self, keys: Optional[Keys] = None):
@@ -70,7 +71,7 @@ class ExperimentDescription:
     def permutable(self):
         keys = self.getKeys()
 
-        sweeps: Dict[str, Any] = {}
+        sweeps: Record = {}
         for key in keys:
             sweeps[key] = self._d[key]
 
@@ -95,21 +96,17 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
     ```
     """
-    def getPermutation(self, idx: int):
-        # we can freely rotate the idx without changing the permutation
-        # allows us to upper-bound number of cache entries
-        idx = idx % self.numPermutations()
+    def getPermutation(self, idx: int) -> Record:
+        if self._pairs is None:
+            sweeps = self.permutable()
+            self._pairs = _flattenToKeyValues(sweeps)
 
-        if idx in self._perms:
-            return self._perms[idx]
-
-        sweeps = self.permutable()
-        permutation = getParameterPermutation(sweeps, idx)
+        permutation = getPermutationFromPairs(self._pairs, idx)
         d = merge(self._d, permutation)
 
-        self._perms[idx] = d
-
-        return d
+        # since we are caching, we need to guarantee modifications to the returned dict
+        # are not propagated to the cached dict
+        return copy.deepcopy(d)
 
     """doc
     Gives the total number of parameter permutations.
@@ -123,9 +120,11 @@ class ExperimentDescription:
         if self._num_perms is not None:
             return self._num_perms
 
-        sweeps = self.permutable()
-        self._num_perms = getNumberOfPermutations(sweeps)
+        if self._pairs is None:
+            sweeps = self.permutable()
+            self._pairs = _flattenToKeyValues(sweeps)
 
+        self._num_perms = getCountFromPairs(self._pairs)
         return self._num_perms
 
     """doc

@@ -5,10 +5,23 @@ from typing import Dict, Any, List, Tuple
 
 Record = Dict[str, Any]
 PathDict = Dict[DictPath, Any]
+KVPair = Tuple[DictPath, List[Any]]
+
+# -----------------------------------------------------------------------------
+# clean public api
 
 def getParameterPermutation(sweeps: Record, index: int):
     pairs = _flattenToKeyValues(sweeps)
+    return getPermutationFromPairs(pairs, index)
 
+
+def getNumberOfPermutations(sweeps: Record):
+    pairs = _flattenToKeyValues(sweeps)
+    return getCountFromPairs(pairs)
+
+# -----------------------------------------------------------------------------
+
+def getPermutationFromPairs(pairs: List[KVPair], index: int):
     perm: PathDict = {}
     accum = 1
 
@@ -25,8 +38,7 @@ def getParameterPermutation(sweeps: Record, index: int):
 
     return reconstructParameters(perm)
 
-def getNumberOfPermutations(sweeps: Record):
-    pairs = _flattenToKeyValues(sweeps)
+def getCountFromPairs(pairs: List[KVPair]):
     accum = 1
     for pair in pairs:
         _, values = pair
@@ -34,8 +46,6 @@ def getNumberOfPermutations(sweeps: Record):
         accum *= num
 
     return accum
-
-# -----------------------------------------------------------------------------
 
 def dropLastArray(key: str):
     parts = key.split('.')

@@ -157,3 +157,31 @@ class TestExperimentName(unittest.TestCase):
         expected = 'overfit/best'
 
         self.assertEqual(got, expected)
+
+class TestRegressions(unittest.TestCase):
+    def fakeDescription(self):
+        return {
+            'metaParameters': {
+                'alpha': [0.01, 0.02, 0.04],
+                'epsilon': 0.05,
+                'gamma': [0.9]
+            },
+        }
+
+    def test_mutatingPermutationsDoesNotInvalidateCache(self):
+        exp = ExperimentDescription(self.fakeDescription())
+
+        params = exp.getPermutation(0)['metaParameters']
+
+        # mutate params
+        params['new_param'] = 1
+
+        # check again
+        params2 = exp.getPermutation(0)['metaParameters']
+
+        # 'new_param' should not appear on dict
+        self.assertDictEqual(params2, {
+            'alpha': 0.01,
+            'epsilon': 0.05,
+            'gamma': 0.9,
+        })
