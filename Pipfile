@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+numba = ">=0.52.0"
+numpy = ">=1.21.5"
+h5py = ">=3.1.0"
+filelock = ">=3.0.0"
+
+[dev-packages]
+mypy = ">=0.942"
+flake8 = ">=4.0.1"
+commitizen = "*"
+pre-commit = "*"
+pipenv-setup = {extras = ["black"], version = "*"}
+matplotlib = "*"
