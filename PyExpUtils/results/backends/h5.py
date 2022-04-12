@@ -1,5 +1,7 @@
 import h5py
 import numpy as np
+from numba import njit
+from numba.typed import List as NList
 from filelock import FileLock
 from PyExpUtils.results.indices import listIndices
 from typing import Any, Dict, List, Sequence, Type, Union, cast
@@ -49,7 +51,7 @@ class H5Result(BaseResult):
                 uneven = True
 
         # convert from dictionary to ordered list
-        final_data = [all_data[run] for run in sorted(all_data.keys())]
+        final_data = NList([all_data[run] for run in sorted(all_data.keys())])
         if uneven:
             final_data = _padUneven(final_data, np.nan)
 
@@ -159,11 +161,6 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
     h5_file = save_context.resolve(filename)
     header = buildCsvParams(exp, idx)
 
-    # check if the data is a scalar. If so, compression cannot be used
-    # Note: types are incorrect on grp.create_dataset, so a cast is necessary
-    is_scalar = np.ndim(data) == 0
-    compression = cast(str, None if is_scalar else 'lzf')
-
     start_run = exp.getRun(idx)
     with FileLock(h5_file + '.lock'):
         with h5py.File(h5_file, 'a') as f:
@@ -175,14 +172,20 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
             for r, d in enumerate(data):
                 if d is None: continue
 
+                is_scalar = np.ndim(d) == 0
+                compression = cast(str, None if is_scalar else 'lzf')
+
                 run = start_run + r
                 grp.create_dataset(str(run), data=d, compression=compression)
 
     return h5_file
 
+@njit(cache=True)
 def _padUneven(data: Sequence[np.ndarray], val: float):
-    lens = np.array([len(item) for item in data])
-    mask = lens[:, None] > np.arange(lens.max())
-    out = np.full(mask.shape, val)
-    out[mask] = np.concatenate(data)
+    m = max([len(sub) for sub in data])
+    out = np.full((len(data), m), val)
+
+    for i, sub in enumerate(data):
+        out[i, :len(sub)] = sub
+
     return out

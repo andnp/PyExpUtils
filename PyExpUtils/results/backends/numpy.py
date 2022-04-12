@@ -123,6 +123,6 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, 
     save_context.ensureExists()
 
     np_file = save_context.resolve(f'{filename}.npy')
-    np.save(np_file, data)
+    np.save(np_file, np.asarray(data, dtype=object))
 
     return np_file
