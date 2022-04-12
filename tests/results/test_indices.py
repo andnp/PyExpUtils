@@ -1,7 +1,6 @@
 import unittest
 import os
 import shutil
-import tarfile
 from PyExpUtils.results.indices import listIndices, listMissingResults
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
@@ -52,35 +51,6 @@ class TestIndices(unittest.TestCase):
 
         for path in mock_data:
             os.makedirs(path, exist_ok=True)
-
-        got = list(listMissingResults(exp, 2))
-        expected = [3, 5, 6, 7]
-
-        self.assertListEqual(got, expected)
-
-    def test_listMissingResultsArchive(self):
-        exp = RLExperiment({
-            'agent': 'test_archive',
-            'environment': 'gridworld',
-            'metaParameters': {
-                'alpha': [0.01, 0.02],
-                'lambda': [1.0, 0.99],
-            }
-        })
-
-        mock_data = [
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/0',   # 0
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-1.0/1',   # 4
-            '.tmp/test_archive/gridworld/alpha-0.01_lambda-0.99/0',  # 1
-            '.tmp/test_archive/gridworld/alpha-0.02_lambda-1.0/0',   # 2
-        ]
-
-        with tarfile.open('.tmp.tar', 'a') as tar:
-            for path in mock_data:
-                os.makedirs(path, exist_ok=True)
-                tar.add(path)
-
-            shutil.rmtree('.tmp/test_archive')
 
         got = list(listMissingResults(exp, 2))
         expected = [3, 5, 6, 7]

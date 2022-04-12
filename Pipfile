@@ -16,3 +16,4 @@ commitizen = "*"
 pre-commit = "*"
 pipenv-setup = {extras = ["black"], version = "*"}
 matplotlib = "*"
+types-filelock = "*"

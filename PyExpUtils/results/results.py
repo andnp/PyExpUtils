@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.typing as npt
 from typing import Any, Callable, Dict, Generator, List, Optional, Type
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.utils.arrays import first

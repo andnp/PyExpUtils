@@ -1,5 +1,4 @@
 import os
-from PyExpUtils.utils.archive import getArchiveName, inArchive
 from PyExpUtils.results.paths import listResultsPaths
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
@@ -33,7 +32,6 @@ for i in listMissingResults(exp, runs=100):
 def listMissingResults(exp: ExperimentDescription, runs: int = 1):
     idx = 0
     for path in listResultsPaths(exp, runs):
-        archive = getArchiveName(path)
-        if not os.path.exists(path) and not inArchive(archive, path):
+        if not os.path.exists(path):
             yield idx
         idx += 1
