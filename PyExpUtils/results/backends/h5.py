@@ -1,6 +1,5 @@
 import h5py
 import numpy as np
-from numba import njit
 from numba.typed import List as NList
 from filelock import FileLock
 from PyExpUtils.results.indices import listIndices
@@ -8,6 +7,7 @@ from typing import Any, Dict, List, Sequence, Type, Union, cast
 from PyExpUtils.utils.cache import Cache
 from PyExpUtils.results.backends.backend import BaseResult
 from PyExpUtils.utils.csv import buildCsvParams
+from PyExpUtils.utils.jit import try2jit
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 class H5Result(BaseResult):
@@ -180,7 +180,7 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
 
     return h5_file
 
-@njit(cache=True)
+@try2jit
 def _padUneven(data: Sequence[np.ndarray], val: float):
     m = max([len(sub) for sub in data])
     out = np.full((len(data), m), val)

@@ -1,10 +1,10 @@
 from PyExpUtils.utils.dict import pick
 from copy import deepcopy
 import numpy as np
-from numba import njit
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.results import ResultList, Reducer, whereParametersEqual
 from PyExpUtils.utils.types import T
+from PyExpUtils.utils.jit import try2jit
 from typing import Dict, List, NamedTuple, Tuple, Union, cast
 
 Name = Union[int, str]
@@ -209,7 +209,7 @@ def instantRunoff(ballots: List[RankedBallot]) -> Name:
     # run the vote again with the modified ballots
     return instantRunoff(ballots)
 
-@njit(cache=True)
+@try2jit
 def computeVoteMatrix(ranks: np.ndarray):
     n = len(ranks)
     matrix = np.zeros((n, n))
@@ -229,7 +229,7 @@ def computeVoteMatrix(ranks: np.ndarray):
 
     return matrix
 
-@njit(cache=True)
+@try2jit
 def copelandScore(sum_matrix: np.ndarray):
     scores = np.zeros(sum_matrix.shape[0])
 

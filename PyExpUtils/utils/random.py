@@ -1,8 +1,8 @@
 import numpy as np
-from numba import njit
 from typing import Any, Sequence
 from PyExpUtils.utils.arrays import argsmax
 from PyExpUtils.utils.types import NpList, T
+from PyExpUtils.utils.jit import try2jit
 
 # way faster than np.random.choice
 # arr is an array of probabilities, should sum to 1
@@ -10,7 +10,7 @@ def sample(arr: NpList, rng: Any = np.random):
     r = rng.random()
     return _sample(np.asarray(arr), r)
 
-@njit(cache=True)
+@try2jit
 def _sample(arr: np.ndarray, r: float):
     s = 0
     for i, p in enumerate(arr):

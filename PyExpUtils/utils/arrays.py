@@ -1,9 +1,9 @@
 import numpy as np
-from PyExpUtils.utils.generator import windowAverage
-from PyExpUtils.utils.types import AnyNumber, ForAble, T, NpList
 from itertools import tee, filterfalse
 from typing import Any, Callable, List, Sequence, Union, Iterator, Optional
-from numba import njit
+from PyExpUtils.utils.jit import try2jit
+from PyExpUtils.utils.generator import windowAverage
+from PyExpUtils.utils.types import AnyNumber, ForAble, T, NpList
 
 def npPadUneven(arr: Sequence[np.ndarray], val: float) -> np.ndarray:
     longest = len(arr[0])
@@ -109,7 +109,7 @@ def downsample(arr: Sequence[AnyNumber], percent: Optional[float] = None, num: O
 def argsmax(arr: NpList):
     return _argsmax(np.asarray(arr))
 
-@njit(cache=True)
+@try2jit
 def _argsmax(arr: np.ndarray):
     ties: List[int] = [0 for _ in range(0)]  # <-- trick njit into knowing the type of this empty list
     top: float = arr[0]
@@ -127,7 +127,7 @@ def _argsmax(arr: np.ndarray):
 
     return ties
 
-@njit(cache=True)
+@try2jit
 def argsmax2(arr: np.ndarray):
     ties: List[List[int]] = []
     for i in range(arr.shape[0]):
