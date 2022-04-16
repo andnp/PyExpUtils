@@ -8,7 +8,7 @@ git config user.name "github-action"
 
 git fetch --all --tags
 
-git checkout -f main
+git checkout -f master
 
 # sync package dependencies
 pipenv-setup sync --dev --pipfile
@@ -18,3 +18,8 @@ cz bump --no-verify --yes --check-consistency
 
 git push
 git push --tags
+
+# push to pypi repository
+python -m build
+
+python -m twine upload -u __token__ -p ${PYPI_TOKEN} --non-interactive dist/*
