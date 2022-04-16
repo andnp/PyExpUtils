@@ -3,9 +3,8 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Type
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.utils.arrays import first
 from PyExpUtils.utils.dict import equal, get, partialEqual
-from PyExpUtils.results.backends.backend import BaseResult, ResultList, DuckResult
+from PyExpUtils.results.backends.backend import BaseResult, ResultList
 import PyExpUtils.results.backends.csv as CsvBackend
-import PyExpUtils.results.backends.numpy as NumpyBackend
 import PyExpUtils.results.backends.h5 as H5Backend
 
 """doc
@@ -31,10 +30,7 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
 
     # but override that if a class is specified
     # trust the caller knows what they're doing if this is specified
-    if issubclass(ResultClass, NumpyBackend.Result):
-        return NumpyBackend.loadResults(exp, result_file, base, cache, ResultClass)
-
-    elif issubclass(ResultClass, CsvBackend.Result):
+    if issubclass(ResultClass, CsvBackend.Result):
         return CsvBackend.loadResults(exp, result_file, base, cache, ResultClass)
 
     elif issubclass(ResultClass, H5Backend.H5Result):
@@ -42,9 +38,6 @@ def loadResults(exp: ExperimentDescription, result_file: str, base: str = './', 
 
     if backend == 'csv':
         return CsvBackend.loadResults(exp, result_file, base, cache)
-
-    elif backend == 'numpy':
-        return NumpyBackend.loadResults(exp, result_file, base, cache)
 
     elif backend == 'h5':
         return H5Backend.loadResults(exp, result_file, base, cache)
@@ -58,8 +51,6 @@ Save a set of results to file, using the file extension to determine the saving 
 def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: Any, base: str = './'):
     if filename.endswith('.csv'):
         return CsvBackend.saveResults(exp, idx, filename, data, base)
-    elif filename.endswith('.npy'):
-        return NumpyBackend.saveResults(exp, idx, filename, data, base)
     elif filename.endswith('.h5'):
         return H5Backend.saveResults(exp, idx, filename, data, base)
 
@@ -76,7 +67,7 @@ print(bins) # -> { 1.0: [Result, Result, ...], 0.5: [Result, Result, ...], 0.25:
 ```
 """
 def splitOverParameter(results: ResultList, param: str):
-    parts: Dict[Any, List[DuckResult]] = {}
+    parts: Dict[Any, List[BaseResult]] = {}
     for r in results:
         param_value = get(r.params, param)
 
@@ -100,10 +91,10 @@ slice = sliceOverParameter(results, result, 'lambda')
 print(slice) # => { 1.0: [Result, Result, ...], 0.99: [Result, Result, ...], 0.98: [Result, Result], ....}
 ```
 """
-def sliceOverParameter(results: ResultList, slicer: DuckResult, param: str):
+def sliceOverParameter(results: ResultList, slicer: BaseResult, param: str):
     parts = splitOverParameter(results, param)
 
-    sl: Dict[str, Optional[DuckResult]] = {}
+    sl: Dict[str, Optional[BaseResult]] = {}
     for k in parts:
         sl[k] = find(parts[k], slicer, ignore=[param])
 
@@ -176,7 +167,7 @@ print(result.params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
 print(match.params) # -> { 'alpha': 1.0, 'lambda': 0.98 }
 ```
 """
-def find(stream: ResultList, other: DuckResult, ignore: List[str] = []):
+def find(stream: ResultList, other: BaseResult, ignore: List[str] = []):
     params = other.params
     for res in stream:
         if equal(params, res.params, ignore):

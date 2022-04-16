@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import abstractmethod
 import numpy as np
 from typing import Any, Callable, Optional, Sequence, Iterator, Union
@@ -123,13 +124,22 @@ for result in results:
     view2 = result.reducer(lambda m: m.std())
 ```
 """
-class ResultView:
+class ResultView(BaseResult):
     def __init__(self, result: BaseResult):
         self._result = result
         self._reducer = _identity
         self.idx = result.idx
         self.exp = result.exp
         self.params = result.params
+
+    def _default(self):
+        return self._result._default()
+
+    def runs(self):
+        return self._result.runs()
+
+    def _load(self) -> Any:
+        return self._result._load()
 
     def reducer(self, lm: Any):
         self._reducer = lm
@@ -144,8 +154,7 @@ class ResultView:
     def stderr(self):
         return self._reducer(self._result.stderr())
 
-DuckResult = Union[BaseResult, ResultView]
-ResultList = Union[Sequence[DuckResult], Iterator[DuckResult]]
+ResultList = Union[Sequence[BaseResult], Iterator[BaseResult]]
 
 def _identity(m: T) -> T:
     return m
