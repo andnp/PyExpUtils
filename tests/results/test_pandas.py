@@ -1,0 +1,153 @@
+from typing import List
+import shutil
+import os
+import PyExpUtils.results.backends.pandas as PDBackend
+from PyExpUtils.results.tools import collapseRuns
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+import unittest
+import numpy as np
+
+exp = ExperimentDescription({
+    'metaParameters': {
+        'alpha': [1.0, 0.5, 0.25],
+        'ratio': [1.0, 2.0, 4.0, 8.0],
+        'model': {
+            'name': ['PR', 'ESARSA'],
+        }
+    },
+})
+
+class TestPandas(unittest.TestCase):
+    files: List[str] = []
+
+    def getBase(self):
+        return '.tests/test_pandas'
+
+    def registerFile(self, name: str):
+        rest = os.path.dirname(name)
+        os.makedirs(rest, exist_ok=True)
+        self.files.append(name)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        for name in cls.files:
+            di = name.split('/')[0]
+            shutil.rmtree(di, ignore_errors=True)
+
+        return super().tearDownClass()
+
+    def test_loadResults(self):
+        np.random.seed(0)
+        dummy = np.random.normal(0, 1, size=(5000, 5))
+
+        # --------------------------
+        # Can save pd data to a file
+        # --------------------------
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': 0.01 } }, save_key='')
+
+        base = f'{self.getBase()}/test_loadResults'
+
+        path = ''
+        num_params = exp.numPermutations()
+        for i in range(dummy.shape[0]):
+            path = PDBackend.saveResults(exp, i * num_params, 'test1', dummy[i], base=base, batch_size=100)
+
+        self.registerFile(path)
+
+        df = PDBackend.loadResults(exp, 'test1', base=base, use_cache=False)
+        data = np.array([np.asarray(row) for row in df['data']])
+
+        got = data.mean(axis=0)
+        expected = np.array([-0.01047754, 0.02722873, -0.0084752, -0.01217733, -0.0069713])
+        self.assertTrue(np.allclose(got, expected, atol=1e-4))
+
+        # ----------------------
+        # Can handle uneven data
+        # ----------------------
+        uneven_dummy = [
+            np.array([1., 2, 3]),
+            np.array([2., 2]),
+            np.array([3.]),
+        ]
+
+        path = PDBackend.saveSequentialRuns(exp, 0, 'test2', uneven_dummy, base=base)
+        self.registerFile(path)
+
+        df = PDBackend.loadResults(exp, 'test2', base=base)
+        data = np.array([np.asarray(row) for row in df['data']])
+
+        got = np.nanmean(data, axis=0)
+        expected = np.array([2, 2, 3])
+
+        self.assertTrue(np.allclose(got, expected))
+
+        # check folding uneven runs
+        df = collapseRuns(df)
+        data = df['data'][0]
+
+        got = np.nanmean(data, axis=0)
+        expected = np.array([2, 2, 3])
+        self.assertTrue(np.allclose(got, expected))
+
+        # ------------------------
+        # Can save multiple params
+        # ------------------------
+        dummy1 = dummy[:2500]
+        dummy2 = dummy[2500:] + 1
+
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': [0.01, 0.02] } }, save_key='')
+
+        path = PDBackend.saveSequentialRuns(exp, 0, 'test3', dummy1, base=base)
+        path = PDBackend.saveSequentialRuns(exp, 1, 'test3', dummy2, base=base)
+        self.registerFile(path)
+
+        df = PDBackend.loadResults(exp, 'test3', base=base)
+        data = np.array([np.asarray(row) for row in df['data']])
+
+        # check first result (alpha=0.01)
+        got = df[df['alpha'] == 0.01]['data']
+        self.assertEqual(len(got), 2500)
+
+        data = np.array([np.asarray(row) for row in got])
+        got = np.mean(data, axis=0)
+        expected = np.array([-0.02774155, 0.00835112, -0.03870346, -0.02883856, -0.00441377])
+        self.assertTrue(np.allclose(got, expected, atol=1e-4))
+
+        # check second result (alpha=0.02)
+        got = df[df['alpha'] == 0.02]['data']
+        self.assertEqual(len(got), 2500)
+
+        data = np.array([np.asarray(row) for row in got])
+        got = np.mean(data, axis=0)
+        expected = np.array([1.00678647, 1.04610634, 1.02175261, 1.0044839, 0.99047117])
+        self.assertTrue(np.allclose(got, expected, atol=1e-4))
+
+    def test_detectMissingResults(self):
+        base = f'{self.getBase()}/test_detectMissingResults'
+
+        dummy = np.array([
+            [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            [3, 4, 5, 6, 7],
+        ])
+
+        dummy2 = [
+            [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            None,
+            [3, 4, 5, 6, 7],
+        ]
+
+        exp = ExperimentDescription({ "metaParameters": { 'alpha': [0.01, 0.02, 0.03, 0.04] } }, save_key='')
+
+        path = PDBackend.saveSequentialRuns(exp, 0, 'test1', dummy, base=base)
+        path = PDBackend.saveSequentialRuns(exp, 2, 'test1', dummy2, base=base)
+        self.registerFile(path)
+
+        missing = PDBackend.detectMissingIndices(exp, 5, 'test1', base=base)
+        missing = list(missing)
+        # no guarantees about ordering
+        missing = sorted(missing)
+
+        expected = [1, 3, 5, 7, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
+        self.assertEqual(missing, expected)
