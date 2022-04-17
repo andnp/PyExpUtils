@@ -16,10 +16,10 @@ pipenv-setup sync --dev --pipfile
 # bump the version
 cz bump --no-verify --yes --check-consistency
 
-git push
-git push --tags
-
 # push to pypi repository
 python -m build
 
 python -m twine upload -u __token__ -p ${PYPI_TOKEN} --non-interactive dist/*
+
+git push
+git push --tags
