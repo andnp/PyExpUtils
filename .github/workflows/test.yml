@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install pipenv
-        pipenv install --dev --python ${{ matrix.python-version }}
+        pipenv install --skip-lock --dev --python ${{ matrix.python-version }}
     - name: Test
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
