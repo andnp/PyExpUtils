@@ -6,4 +6,4 @@ __pycache__/
 
 env/
 dist/
-PyFixedReps_andnp*
+PyExpUtils_andnp*
