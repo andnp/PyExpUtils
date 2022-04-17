@@ -1,10 +1,13 @@
+from collections import defaultdict
 import os
 import glob
 import pandas as pd
 from filelock import FileLock
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
+from PyExpUtils.FileSystemContext import FileSystemContext
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.indices import listIndices
+from PyExpUtils.utils.Collector import Collector
 from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.types import NpList
 from PyExpUtils.utils.asyncio import threadMap
@@ -14,8 +17,7 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: NpLis
     context.ensureExists()
 
     params = exp.getPermutation(idx)['metaParameters']
-    keys = flatKeys(params)
-    header = sorted(keys)
+    header = getHeader(exp)
     pvalues = [get(params, k) for k in header]
 
     run = exp.getRun(idx)
@@ -25,11 +27,7 @@ def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: NpLis
     # --------------
     # -- batching --
     # --------------
-    if batch_size is None:
-        data_file = context.resolve(f'{filename}.csv')
-    else:
-        batch_idx = int(idx // batch_size)
-        data_file = context.resolve(f'{filename}.{batch_idx}.csv')
+    data_file = _batchFile(context, filename, idx, batch_size)
 
     with FileLock(data_file + '.lock'):
         df.to_csv(data_file, mode='a+', header=False, index=False)
@@ -41,8 +39,7 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
     context.ensureExists()
 
     params = exp.getPermutation(idx)['metaParameters']
-    keys = flatKeys(params)
-    header = sorted(keys)
+    header = getHeader(exp)
     pvalues = [get(params, k) for k in header]
 
     run = exp.getRun(idx)
@@ -58,16 +55,47 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
     # --------------
     # -- batching --
     # --------------
-    if batch_size is None:
-        data_file = context.resolve(f'{filename}.csv')
-    else:
-        batch_idx = int(idx // batch_size)
-        data_file = context.resolve(f'{filename}.{batch_idx}.csv')
+    data_file = _batchFile(context, filename, idx, batch_size)
 
     with FileLock(data_file + '.lock'):
         df.to_csv(data_file, mode='a+', header=False, index=False)
 
     return data_file
+
+def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = './', batch_size: Optional[int] = 20000):
+    context = exp.buildSaveContext(0, base=base)
+    context.ensureExists()
+
+    header = getHeader(exp)
+
+    to_write = defaultdict(list)
+
+    for filename in collector.keys():
+        for idx in collector.indices(filename):
+            data = collector.get(filename, idx)
+
+            params = exp.getPermutation(idx)['metaParameters']
+            run = exp.getRun(idx)
+            pvalues = [get(params, k) for k in header]
+
+            row = pvalues + [run] + list(data)
+            data_file = _batchFile(context, filename, idx, batch_size)
+
+            to_write[data_file].append(row)
+
+    for path in to_write:
+        df = pd.DataFrame(to_write[path])
+
+        with FileLock(path + '.lock'):
+            df.to_csv(path, mode='a+', header=False, index=False)
+
+
+def _batchFile(context: FileSystemContext, filename: str, idx: int, batch_size: Optional[int]):
+    if batch_size is None:
+        return context.resolve(f'{filename}.csv')
+
+    batch_idx = int(idx // batch_size)
+    return context.resolve(f'{filename}.{batch_idx}.csv')
 
 def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use_cache: bool = True) -> pd.DataFrame:
     context = exp.buildSaveContext(0, base=base)
@@ -87,9 +115,7 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     if use_cache and os.path.exists(cache_file) and os.path.getmtime(cache_file) > latest:
         return pd.read_pickle(cache_file)
 
-    params = exp.getPermutation(0)['metaParameters']
-    keys = flatKeys(params)
-    header = sorted(keys)
+    header = getHeader(exp)
 
     if len(files) == 0:
         raise Exception('No result files found')
@@ -116,10 +142,7 @@ def _readUnevenCsv(f: str):
 def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, base: str = './'): # noqa: C901
     indices = listIndices(exp)
     nperms = exp.numPermutations()
-
-    params = exp.getPermutation(0)['metaParameters']
-    keys = flatKeys(params)
-    header = sorted(keys)
+    header = getHeader(exp)
 
     df = loadResults(exp, filename, base=base)
     grouped = df.groupby(header)
@@ -159,3 +182,15 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, b
         for run in range(runs):
             if not (group['run'] == run).any():
                 yield idx + run * nperms
+
+def getHeader(exp: ExperimentDescription):
+    params = exp.getPermutation(0)['metaParameters']
+    keys = flatKeys(params)
+    return sorted(keys)
+
+def getParamValues(exp: ExperimentDescription, idx: int, header: Optional[Sequence[str]] = None):
+    if header is None:
+        header = getHeader(exp)
+
+    params = exp.getPermutation(idx)['metaParameters']
+    return [get(params, k) for k in header]

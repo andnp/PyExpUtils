@@ -1,31 +1,39 @@
-from PyExpUtils.utils.permute import Record
-from typing import Any, Callable, Dict, List, cast
-import numpy as np
+from typing import Any, Callable, Dict, List, Optional
 from PyExpUtils.utils.arrays import last, fillRest_
+from PyExpUtils.utils.NestedDict import NestedDict
 
 class Collector:
-    def __init__(self):
-        self.run_data: Record = {}
-        self.all_data: Record = {}
+    def __init__(self, idx: Optional[int] = None):
+        self._name_idx_data: NestedDict = NestedDict(depth=2, default=list)
 
         self.sample_rate: Dict[str, int] = {}
         self.sample_clock: Dict[str, int] = {}
 
-    def reset(self):
-        for k in self.run_data:
-            # if there's already an array get that
-            # otherwise construct a new empty array
-            arr = self.all_data.get(k, [])
-            arr.append(self.run_data[k])
+        self._idx: Optional[int] = idx
 
-            # put the array back in case we were working with a new array
-            self.all_data[k] = arr
+    def setIdx(self, idx: int):
+        self._idx = idx
 
-        # reset the run_data for the next run
-        self.run_data = {}
+    def getIdx(self):
+        assert self._idx is not None
+        return self._idx
+
+    def get(self, name: str, idx: Optional[int] = None):
+        if idx is not None:
+            return self._name_idx_data[name, idx]
+
+        all_idxs = self._name_idx_data[name]
+        return list(all_idxs[k] for k in sorted(all_idxs.keys()))
+
+    def keys(self):
+        return self._name_idx_data.keys()
+
+    def indices(self, key: str):
+        return self._name_idx_data[key].keys()
 
     def fillRest(self, name: str, steps: int):
-        arr = self.run_data[name]
+        idx = self.getIdx()
+        arr = self._name_idx_data[name, idx]
         l = last(arr)
         fillRest_(arr, l, steps)
 
@@ -37,16 +45,23 @@ class Collector:
         if sample_clock % sample_rate > 0:
             return
 
-        arr = self.run_data.get(name, [])
+        idx = self.getIdx()
+        arr = self._name_idx_data[name, idx]
         arr.append(value)
 
-        self.run_data[name] = arr
-
     def concat(self, name: str, values: List[Any]):
-        # don't just append to the array
-        # we need to make sure we respect sample rates
-        for v in values:
-            self.collect(name, v)
+        if name in self.sample_rate:
+            # don't just append to the array
+            # we need to make sure we respect sample rates
+            for v in values:
+                self.collect(name, v)
+
+            return
+
+        # otherwise, we can be smart and avoid a linear cost
+        idx = self.getIdx()
+        arr = self._name_idx_data[name, idx]
+        arr.extend(values)
 
     def evaluate(self, name: str, lmbda: Callable[[], Any]):
         sample_rate = self.sample_rate.get(name, 1)
@@ -57,23 +72,10 @@ class Collector:
             return
 
         value = lmbda()
-        arr = self.run_data.get(name, [])
+        idx = self.getIdx()
+        arr = self._name_idx_data[name, idx]
         arr.append(value)
-
-        self.run_data[name] = arr
 
     def setSampleRate(self, name: str, every: int):
         self.sample_rate[name] = every
         self.sample_clock[name] = 0
-
-    def getStats(self, name: str):
-        arr = self.all_data[name]
-
-        runs = len(arr)
-        min_len = min(map(lambda a: len(a), arr))
-
-        arr = list(map(lambda a: a[:min_len], arr))
-        mean: float = cast(float, np.mean(arr, axis=0))
-        stderr: float = cast(float, np.std(arr, axis=0, ddof=1)) / np.sqrt(runs)
-
-        return (mean, stderr, runs)

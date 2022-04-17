@@ -7,6 +7,8 @@ from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 import unittest
 import numpy as np
 
+from PyExpUtils.utils.Collector import Collector
+
 exp = ExperimentDescription({
     'metaParameters': {
         'alpha': [1.0, 0.5, 0.25],
@@ -15,7 +17,7 @@ exp = ExperimentDescription({
             'name': ['PR', 'ESARSA'],
         }
     },
-})
+}, save_key='')
 
 class TestPandas(unittest.TestCase):
     files: List[str] = []
@@ -121,6 +123,44 @@ class TestPandas(unittest.TestCase):
         got = np.mean(data, axis=0)
         expected = np.array([1.00678647, 1.04610634, 1.02175261, 1.0044839, 0.99047117])
         self.assertTrue(np.allclose(got, expected, atol=1e-4))
+
+    def test_saveCollector(self):
+        collector = Collector()
+
+        for idx in range(250):
+            collector.setIdx(idx)
+
+            for step in range(10):
+                collector.collect('data1', idx + step)
+                collector.concat('data2', [idx + step, idx + step * 1])
+
+            collector.collect('data3', np.arange(5) * idx)
+
+        base = f'{self.getBase()}/test_saveCollector'
+        self.registerFile(base)
+        PDBackend.saveCollector(exp, collector, base=base, batch_size=47)
+
+        df1 = PDBackend.loadResults(exp, 'data1', base=base)
+        df2 = PDBackend.loadResults(exp, 'data2', base=base)
+        df3 = PDBackend.loadResults(exp, 'data3', base=base)
+        self.assertEqual(len(df1), 250)
+        self.assertEqual(len(df2), 250)
+        self.assertEqual(len(df3), 250)
+
+        self.assertEqual(set(df1['run']), set(range(11)))
+        self.assertEqual(set(df2['run']), set(range(11)))
+        self.assertEqual(set(df3['run']), set(range(11)))
+
+        header = PDBackend.getHeader(exp)
+        key = header + ['run']
+        for idx in range(250):
+            expected = [idx + j for j in range(10)]
+
+            pvalues = PDBackend.getParamValues(exp, idx, header)
+            val = pvalues + [exp.getRun(idx)]
+
+            data = df1[(df1[key] == val).all(axis=1)]['data'].to_list()[0]
+            self.assertEqual(data, expected)
 
     def test_detectMissingResults(self):
         base = f'{self.getBase()}/test_detectMissingResults'

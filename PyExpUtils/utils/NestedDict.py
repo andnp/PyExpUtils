@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Dict, Generator, Generic, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Generator, Generic, Optional, Tuple, TypeVar, Union
 
 K = TypeVar('K', bound=Union[int, str])
 V = TypeVar('V')
@@ -7,8 +7,9 @@ R = TypeVar('R')
 
 Key = Union[K, Tuple[K, ...]]
 class NestedDict(Generic[K, V]):
-    def __init__(self, depth: int):
+    def __init__(self, depth: int, default: Optional[Callable[[], V]] = None):
         self._depth = depth
+        self._default = default
         self._data: Dict[K, Any] = {}
 
     def __getitem__(self, keys: Key[K]) -> Any:
@@ -20,10 +21,16 @@ class NestedDict(Generic[K, V]):
         # easy case: we directly access a single element
         if not has_ellipse:
             level: Any = self._data
-            for key in keys:
+            for key in keys[:-1]:
+                if key not in level:
+                    level[key] = {}
+
                 level = level[key]
 
-            return level
+            if keys[-1] not in level and self._default is not None:
+                level[keys[-1]] = self._default()
+
+            return level[keys[-1]]
 
         out = {}
         idx = keys.index(...)
