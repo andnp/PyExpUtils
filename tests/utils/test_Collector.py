@@ -109,3 +109,20 @@ class TestCollector(unittest.TestCase):
         got = collector.get('data', 0)
 
         self.assertEqual(got, expected)
+
+    def test_downsample(self):
+        collector = Collector(idx=0)
+
+        for r in range(10):
+            collector.setIdx(r)
+            for idx in range(15):
+                collector.collect('data', r * idx)
+
+        # downsample to only 5 values in each run
+        collector.downsample('data', num=5, method='window')
+
+        for i in range(10):
+            expected = [i * j for j in range(1, 15, 3)]
+            got = collector.get('data', i)
+
+            self.assertEqual(got, expected)

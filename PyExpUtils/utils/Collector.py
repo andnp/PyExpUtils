@@ -1,5 +1,5 @@
 from typing import Any, Callable, Dict, List, Optional
-from PyExpUtils.utils.arrays import last, fillRest_
+from PyExpUtils.utils.arrays import downsample, last, fillRest_
 from PyExpUtils.utils.NestedDict import NestedDict
 
 class Collector:
@@ -36,6 +36,13 @@ class Collector:
         arr = self._name_idx_data[name, idx]
         l = last(arr)
         fillRest_(arr, l, steps)
+
+    def downsample(self, name: str, percent: Optional[float] = None, num: Optional[int] = None, method: str = 'window'):
+        idxs = self._name_idx_data[name]
+        for idx in idxs:
+            data = idxs[idx]
+            arr = downsample(data, percent, num, method)
+            self._name_idx_data[name, idx] = arr
 
     def collect(self, name: str, value: Any):
         sample_rate = self.sample_rate.get(name, 1)
