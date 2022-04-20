@@ -3,20 +3,21 @@ import os
 import glob
 import importlib
 import pandas as pd
-from typing import Any, Callable, Dict, List, Optional, TypeVar, overload
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Type, overload
 from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.NestedDict import NestedDict
 from PyExpUtils.utils.permute import set_at_path
-from PyExpUtils.models.ExperimentDescription import loadExperiment
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
 from PyExpUtils.results.backends.pandas import loadResults
 from PyExpUtils.results.results import ResultList
 
 RList = TypeVar('RList', bound=ResultList)
 class ResultCollection(NestedDict[str, pd.DataFrame]):
-    def __init__(self):
+    def __init__(self, Model: Optional[Type[ExperimentDescription]] = None):
         super().__init__(depth=2)
 
         self._data: Dict[str, Dict[str, pd.DataFrame]] = {}
+        self._Model = Model
 
     def apply(self, f: Callable[[pd.DataFrame], pd.DataFrame | None]):
         for key in self:
@@ -27,16 +28,16 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
         return self
 
     @classmethod
-    def fromExperiments(cls, file: str, path: Optional[str] = None) -> ResultCollection:
+    def fromExperiments(cls, file: str, path: Optional[str] = None, Model: Optional[Type[ExperimentDescription]] = None) -> ResultCollection:
         exp_files = findExperiments('{domain}', path)
 
-        out = cls()
+        out = cls(Model=Model)
         for domain in exp_files:
             paths = exp_files[domain]
             for p in paths:
                 alg = p.split('/')[-1].replace('.json', '')
 
-                exp = loadExperiment(p)
+                exp = loadExperiment(p, Model)
                 df = loadResults(exp, file)
 
                 out[domain, alg] = df

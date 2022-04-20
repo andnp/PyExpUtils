@@ -246,7 +246,10 @@ Loads an ExperimentDescription from a JSON file (preferred way to make Experimen
 exp = loadExperiment('experiments/MountainCar-v0/sarsa.json')
 ```
 """
-def loadExperiment(path: str, Model: Type[ExperimentDescription] = ExperimentDescription):
+def loadExperiment(path: str, Model: Optional[Type[ExperimentDescription]] = None):
+    if Model is None:
+        Model = ExperimentDescription
+
     with open(path, 'r') as f:
         d = json.load(f)
 
