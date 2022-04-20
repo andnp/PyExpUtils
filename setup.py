@@ -4,19 +4,6 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-    extras_require={
-        "dev": [
-            "mypy>=0.942",
-            "flake8>=4.0.1",
-            "commitizen",
-            "pre-commit",
-            "pipenv-setup[black]",
-            "matplotlib",
-            "types-filelock",
-            "build",
-            "twine",
-        ]
-    },
     name="PyExpUtils-andnp",
     url="https://github.com/andnp/PyExpUtils.git",
     author="Andy Patterson",
@@ -35,4 +22,17 @@ setup(
         "filelock>=3.0.0",
         "pandas",
     ],
+    extras_require={
+        "dev": [
+            "mypy>=0.942",
+            "flake8>=4.0.1",
+            "commitizen",
+            "pre-commit",
+            "pipenv-setup[black]",
+            "matplotlib",
+            "types-filelock",
+            "build",
+            "twine",
+        ]
+    },
 )
