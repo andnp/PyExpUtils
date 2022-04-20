@@ -9,7 +9,7 @@ setup(
     author="Andy Patterson",
     author_email="andnpatterson@gmail.com",
     packages=find_packages(exclude=["tests*"]),
-    version="3.2.0",
+    version="3.2.1",
     license="MIT",
     description="A small set of utilities for RL and ML experiments",
     long_description=long_description,
@@ -18,7 +18,7 @@ setup(
     install_requires=[
         "numba>=0.52.0",
         "numpy>=1.21.5",
-        "h5py>=3.2.0",
+        "h5py>=3.1.0",
         "filelock>=3.0.0",
         "pandas",
     ],
