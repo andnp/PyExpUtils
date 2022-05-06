@@ -123,7 +123,7 @@ def _argsmax(arr: np.ndarray):
             ties.append(i)
 
     if len(ties) == 0:
-        ties = list(np.arange(len(arr))[np.isnan(arr) | np.isinf(arr)])
+        ties = list(range(len(arr)))
 
     return ties
 
