@@ -3,7 +3,7 @@ import os
 import glob
 import pandas as pd
 from filelock import FileLock
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Union
 from PyExpUtils.FileSystemContext import FileSystemContext
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.indices import listIndices
@@ -97,7 +97,7 @@ def _batchFile(context: FileSystemContext, filename: str, idx: int, batch_size: 
     batch_idx = int(idx // batch_size)
     return context.resolve(f'{filename}.{batch_idx}.csv')
 
-def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use_cache: bool = True) -> pd.DataFrame:
+def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use_cache: bool = True) -> Union[pd.DataFrame, None]:
     context = exp.buildSaveContext(0, base=base)
 
     files = glob.glob(context.resolve(f'{filename}.*.csv'))
@@ -106,6 +106,10 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     # try again without batching
     if len(files) == 0:
         files = glob.glob(context.resolve(f'{filename}.csv'))
+
+    # if still no files, then no results exist
+    if len(files) == 0:
+        return None
 
     # get latest modification time
     times = (os.path.getmtime(f) for f in files)
@@ -145,18 +149,17 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, b
     header = getHeader(exp)
 
     df = loadResults(exp, filename, base=base)
-    grouped = df.groupby(header)
-
     # ----------------------------------
     # -- first case: no existing data --
     # ----------------------------------
-    if len(df) == 0:
+    if df is None:
         for idx in indices:
             for run in range(runs):
                 yield idx + run * nperms
 
         return
 
+    grouped = df.groupby(header)
     for idx in indices:
         params = exp.getPermutation(idx)['metaParameters']
         pvals = tuple(get(params, k) for k in header)
