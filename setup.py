@@ -10,7 +10,7 @@ setup(
     author_email="andnpatterson@gmail.com",
     packages=find_packages(exclude=["tests*", "scripts*", "typings*", "mock_repo*"]),
     package_data={"PyExpUtils": ["py.typed"]},
-    version="3.2.3",
+    version="3.3.0",
     license="MIT",
     description="A small set of utilities for RL and ML experiments",
     long_description=long_description,
@@ -34,6 +34,7 @@ setup(
             "types-filelock",
             "build",
             "twine",
+            "vistir==0.6.1",
         ]
     },
 )
