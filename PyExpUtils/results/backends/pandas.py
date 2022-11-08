@@ -12,6 +12,9 @@ from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.types import NpList
 from PyExpUtils.utils.asyncio import threadMap
 
+class NoResultException(Exception):
+    ...
+
 def saveResults(exp: ExperimentDescription, idx: int, filename: str, data: NpList, base: str = './', batch_size: Optional[int] = 20000):
     context = exp.buildSaveContext(idx, base=base)
     context.ensureExists()
@@ -62,7 +65,7 @@ def saveSequentialRuns(exp: ExperimentDescription, idx: int, filename: str, data
 
     return data_file
 
-def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = './', batch_size: Optional[int] = 20000):
+def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = './', batch_size: Optional[int] = 20000, keys: Optional[Sequence[str]] = None):
     context = exp.buildSaveContext(0, base=base)
     context.ensureExists()
 
@@ -70,7 +73,10 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
 
     to_write = defaultdict(list)
 
-    for filename in collector.keys():
+    if keys is None:
+        keys = list(collector.keys())
+
+    for filename in keys:
         for idx in collector.indices(filename):
             data = collector.get(filename, idx)
 
@@ -122,7 +128,7 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     header = getHeader(exp)
 
     if len(files) == 0:
-        raise Exception('No result files found')
+        raise NoResultException('No result files found')
 
     partials = threadMap(_readUnevenCsv, files)
     df = pd.concat(partials, ignore_index=True)
@@ -171,6 +177,7 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, b
         # ------------------------------------
         # -- second case: no existing group --
         # ------------------------------------
+        assert grouped is not None
         try:
             group = grouped.get_group(pvals)
         except KeyError:
