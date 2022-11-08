@@ -27,6 +27,14 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
 
         return self
 
+    def map(self, f: Callable[[pd.DataFrame], pd.DataFrame]):
+        out = ResultCollection(self._Model)
+
+        for key in self:
+            out[key] = f(self[key])
+
+        return out
+
     @classmethod
     def fromExperiments(cls, file: str, path: Optional[str] = None, Model: Optional[Type[ExperimentDescription]] = None) -> ResultCollection:
         exp_files = findExperiments('{domain}', path)
