@@ -3,10 +3,11 @@ import os
 import glob
 import pandas as pd
 from filelock import FileLock
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 from PyExpUtils.FileSystemContext import FileSystemContext
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.indices import listIndices
+from PyExpUtils.results.tools import subsetDF
 from PyExpUtils.utils.Collector import Collector
 from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.types import NpList
@@ -96,13 +97,6 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
             df.to_csv(path, mode='a+', header=False, index=False)
 
 
-def _batchFile(context: FileSystemContext, filename: str, idx: int, batch_size: Optional[int]):
-    if batch_size is None:
-        return context.resolve(f'{filename}.csv')
-
-    batch_idx = int(idx // batch_size)
-    return context.resolve(f'{filename}.{batch_idx}.csv')
-
 def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use_cache: bool = True) -> Union[pd.DataFrame, None]:
     context = exp.buildSaveContext(0, base=base)
 
@@ -123,7 +117,8 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
 
     cache_file = context.resolve(filename + '.pkl')
     if use_cache and os.path.exists(cache_file) and os.path.getmtime(cache_file) > latest:
-        return pd.read_pickle(cache_file)
+        df = pd.read_pickle(cache_file)
+        return _subsetDFbyExp(df, exp)
 
     header = getHeader(exp)
 
@@ -141,13 +136,8 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     if use_cache:
         new_df.to_pickle(cache_file)
 
-    return new_df
+    return _subsetDFbyExp(new_df, exp)
 
-def _readUnevenCsv(f: str):
-    with open(f, 'r') as temp_f:
-        col_count = ( len(l.split(",")) for l in temp_f.readlines() )
-
-    return pd.read_csv(f, header=None, names=range(0, max(col_count)))
 
 def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, base: str = './'): # noqa: C901
     indices = listIndices(exp)
@@ -204,3 +194,41 @@ def getParamValues(exp: ExperimentDescription, idx: int, header: Optional[Sequen
 
     params = exp.getPermutation(idx)['metaParameters']
     return [get(params, k) for k in header]
+
+# ---------------
+# -- Utilities --
+# ---------------
+
+# makes sure the dataframe only contains the data for a given experiment description
+def _subsetDFbyExp(df: pd.DataFrame, exp: ExperimentDescription):
+    params = exp._d['metaParameters']
+    return subsetDF(df, _flattenKeys(params))
+
+def _flattenKeys(d: Dict[str, Any]):
+    out = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            for sk, sv in _flattenKeys(v).items():
+                out[f'{k}.{sk}'] = sv
+        else:
+            out[k] = v
+
+    return out
+
+
+# if the csv contains ragged rows (i.e. rows have different numbers of columns)
+# then the native csv reader needs to know the max number of columns.
+# the resulting df will have NaNs for the shorter rows
+def _readUnevenCsv(f: str):
+    with open(f, 'r') as temp_f:
+        col_count = ( len(l.split(",")) for l in temp_f.readlines() )
+
+    names = map(str, range(0, max(col_count)))
+    return pd.read_csv(f, header=None, names=list(names))
+
+def _batchFile(context: FileSystemContext, filename: str, idx: int, batch_size: Optional[int]):
+    if batch_size is None:
+        return context.resolve(f'{filename}.csv')
+
+    batch_idx = int(idx // batch_size)
+    return context.resolve(f'{filename}.{batch_idx}.csv')

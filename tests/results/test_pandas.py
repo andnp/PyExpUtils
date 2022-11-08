@@ -5,19 +5,10 @@ import PyExpUtils.results.backends.pandas as PDBackend
 from PyExpUtils.results.tools import collapseRuns
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 import unittest
+import pandas as pd
 import numpy as np
 
 from PyExpUtils.utils.Collector import Collector
-
-exp = ExperimentDescription({
-    'metaParameters': {
-        'alpha': [1.0, 0.5, 0.25],
-        'ratio': [1.0, 2.0, 4.0, 8.0],
-        'model': {
-            'name': ['PR', 'ESARSA'],
-        }
-    },
-}, save_key='')
 
 class TestPandas(unittest.TestCase):
     files: List[str] = []
@@ -127,6 +118,16 @@ class TestPandas(unittest.TestCase):
     def test_saveCollector(self):
         collector = Collector()
 
+        exp = ExperimentDescription({
+            'metaParameters': {
+                'alpha': [1.0, 0.5, 0.25],
+                'ratio': [1.0, 2.0, 4.0, 8.0],
+                'model': {
+                    'name': ['PR', 'ESARSA'],
+                }
+            },
+        }, save_key='')
+
         for idx in range(250):
             collector.setIdx(idx)
 
@@ -191,3 +192,50 @@ class TestPandas(unittest.TestCase):
 
         expected = [1, 3, 5, 7, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19]
         self.assertEqual(missing, expected)
+
+    # -----------------
+    # -- Regressions --
+    # -----------------
+    def test_loadsOnlySpecifiedParamValues(self):
+        base = f'{self.getBase()}/test_loadsOnlySpecifiedParamValues'
+        self.registerFile(base)
+
+        collector = Collector()
+        collector.setIdx(0)
+        collector.concat('test1', [1, 2, 3])
+        collector.setIdx(1)
+        collector.concat('test1', [2, 3, 4])
+        collector.setIdx(2)
+        collector.concat('test1', [3, 4, 5])
+        collector.setIdx(3)
+        collector.concat('test1', [4, 5, 6])
+
+        exp = ExperimentDescription({ 'metaParameters': { 'alpha': [0.1, 0.2, 0.3, 0.4] }}, save_key='')
+        PDBackend.saveCollector(exp, collector, base=base)
+
+        # assert we can load the complete thing correctly
+        loaded = PDBackend.loadResults(exp, 'test1', base=base, use_cache=False)
+        expected = pd.DataFrame({
+            'alpha': [0.1, 0.2, 0.3, 0.4],
+            'run': [0, 0, 0, 0],
+            'data': [
+                [1, 2, 3],
+                [2, 3, 4],
+                [3, 4, 5],
+                [4, 5, 6],
+            ]
+        })
+        self.assertTrue(loaded.equals(expected))
+
+        # assert we can load a subset
+        sub_exp = ExperimentDescription({ 'metaParameters': { 'alpha': [0.2, 0.3] }}, save_key='')
+        loaded = PDBackend.loadResults(sub_exp, 'test1', base=base, use_cache=False)
+        expected = pd.DataFrame({
+            'alpha': [0.2, 0.3],
+            'run': [0, 0],
+            'data': [
+                [2, 3, 4],
+                [3, 4, 5],
+            ],
+        })
+        self.assertTrue(loaded.equals(expected))
