@@ -36,7 +36,7 @@ class Config:
 
 """doc
 Memoized global configuration loader.
-Will read `config.json` from (only once) and return a Config object.
+Will read `config.json` (only once) and return a Config object.
 ```python
 config = getConfig()
 print(config.save_path) # -> 'results'
