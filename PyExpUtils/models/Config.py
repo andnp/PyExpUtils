@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from dataclasses import dataclass
 from PyExpUtils.utils.fp import once
 
 """doc
@@ -28,14 +28,11 @@ An example configuration file:
 }
 ```
 """
+@dataclass
 class Config:
-    def __init__(self):
-        with open('config.json', 'r') as f:
-            d = json.load(f)
-
-        self.save_path: str = d['save_path']
-        self.log_path: str = d.get('log_path', '.logs')
-        self.experiment_directory: Optional[str] = d.get('experiment_directory', 'experiments')
+    save_path: str
+    log_path: str = '.logs'
+    experiment_directory: str = 'experiments'
 
 """doc
 Memoized global configuration loader.
@@ -47,4 +44,7 @@ print(config.save_path) # -> 'results'
 """
 @once
 def getConfig():
-    return Config()
+    with open('config.json', 'r') as f:
+        d = json.load(f)
+
+    return Config(**d)
