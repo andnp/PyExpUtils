@@ -4,7 +4,7 @@ from PyExpUtils.utils.types import T
 Builder = Callable[[str], T]
 
 class Cache(Generic[T]):
-    def __init__(self):
+    def __init__(self) -> None:
         self.cache: Dict[str, T] = {}
 
     def get(self, key: str, builder: Builder[T]) -> T:

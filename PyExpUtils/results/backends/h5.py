@@ -11,10 +11,10 @@ from PyExpUtils.utils.jit import try2jit
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 class H5Result(BaseResult):
-    def __init__(self, path: str, exp: ExperimentDescription, idx: int):
+    def __init__(self, path: str, exp: ExperimentDescription, idx: int) -> None:
         super().__init__(path, exp, idx)
 
-    def _load(self):
+    def _load(self) -> Union[List[Any], np.ndarray, None]:
         f = h5py.File(self.path, 'r')
         key = buildCsvParams(self.exp, self.idx)
 
@@ -23,7 +23,7 @@ class H5Result(BaseResult):
 
         if num_runs == 0:
             print('Result not found: ', key)
-            return
+            return None
 
         # set up a placeholder for data that can hold run data
         # in order
@@ -65,7 +65,7 @@ class H5Result(BaseResult):
     def mean(self) -> np.ndarray:
         return np.nanmean(self.load(), axis=0)
 
-    def runs(self):
+    def runs(self) -> int:
         return len(self.load())
 
     def stderr(self) -> np.ndarray:

@@ -30,7 +30,7 @@ exp = ExperimentDescription(d)
 ```
 """
 class ExperimentDescription:
-    def __init__(self, d: Dict[str, Any], path: Optional[str] = None, keys: Keys = 'metaParameters', save_key: Optional[str] = None):
+    def __init__(self, d: Dict[str, Any], path: Optional[str] = None, keys: Keys = 'metaParameters', save_key: Optional[str] = None) -> None:
         # the raw serialized json
         self._d = d
         # a collection of keys to permute over
@@ -68,7 +68,7 @@ class ExperimentDescription:
     print(params) # -> { 'alpha': [1.0, 0.5, 0.25, 0.125], 'lambda': [1.0, 0.99, 0.98, 0.96] }
     ```
     """
-    def permutable(self):
+    def permutable(self) -> Dict[str, Any]:
         keys = self.getKeys()
 
         sweeps: Record = {}
