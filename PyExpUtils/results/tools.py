@@ -25,7 +25,7 @@ def _buildMask(df: pd.DataFrame, conds: Dict[str, Any]):
         elif isinstance(cond, list):
             mask = mask & (df[key].isin(cond))
 
-        else:
+        elif key in df:
             mask = mask & (df[key] == cond)
 
     return mask

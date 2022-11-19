@@ -36,3 +36,11 @@ class TestTools(unittest.TestCase):
             'b': [4, 6, 8],
         })
         self.assertTrue(sub.equals(expect))
+
+        # check can specify non-existent columns
+        sub = subsetDF(df, {'a': 1, 'c': 22})
+        expect = pd.DataFrame({
+            'a': [1, 1, 1],
+            'b': [2, 4, 6],
+        })
+        self.assertTrue(sub.equals(expect))
