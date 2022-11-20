@@ -24,9 +24,18 @@ class FileSystemContext:
 
         return Path.join(base, path)
 
-    def ensureExists(self, path: str = ''):
+    def exists(self, path: str = ''):
         path = self.resolve(path)
-        os.makedirs(path, exist_ok=True)
+        return os.path.exists(path)
+
+    def ensureExists(self, path: str = '', is_file: bool = False):
+        path = self.resolve(path)
+        di = path
+        if is_file:
+            di = os.path.dirname(path)
+
+        os.makedirs(di, exist_ok=True)
+        return path
 
     def remove(self, path: str = ''):
         files = self.resolve(path)
