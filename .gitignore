@@ -4,6 +4,8 @@ __pycache__/
 .mypy_cache
 .token
 
+.venv/
 env/
 dist/
 PyExpUtils_andnp*
+.pdm.toml

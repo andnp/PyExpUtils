@@ -11,3 +11,7 @@ repos:
   - id: commitizen
     stages:
     - commit-msg
+- repo: https://github.com/pdm-project/pdm
+  rev: 2.3.0
+  hooks:
+    - id: pdm-lock-check
