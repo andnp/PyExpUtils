@@ -239,3 +239,32 @@ class TestPandas(unittest.TestCase):
             ],
         })
         self.assertTrue(loaded.equals(expected))
+
+    def test_canHandleListsOfDicts(self):
+        exp = ExperimentDescription({
+            'metaParameters': {
+                'alpha': [0.1, 0.01],
+                'network': {
+                    'layers': [
+                        { 'units': 64 },
+                        { 'units': 32 },
+                    ]
+                }
+            }
+        }, save_key='')
+
+        base = f'{self.getBase()}/test_canHandleListsofDicts'
+        self.registerFile(base)
+
+        collector = Collector()
+        collector.setIdx(0)
+        collector.concat('test1', [1, 2, 3])
+        collector.setIdx(2)
+        collector.concat('test1', [3, 4, 5])
+        collector.setIdx(3)
+        collector.concat('test1', [4, 5, 6])
+
+        PDBackend.saveCollector(exp, collector, base=base)
+        missing = list(PDBackend.detectMissingIndices(exp, 2, 'test1', base=base))
+
+        self.assertEqual(missing, [1])
