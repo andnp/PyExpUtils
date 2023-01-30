@@ -222,9 +222,9 @@ def _flattenKeys(d: Dict[str, Any]):
 def _readUnevenCsv(f: str):
     with open(f, 'r') as temp_f:
         col_count = ( len(l.split(",")) for l in temp_f.readlines() )
+        names = list(map(str, range(0, max(col_count))))
 
-    names = map(str, range(0, max(col_count)))
-    return pd.read_csv(f, header=None, names=list(names))
+    return pd.read_csv(f, header=None, names=names)
 
 def _batchFile(context: FileSystemContext, filename: str, idx: int, batch_size: Optional[int]):
     if batch_size is None:
