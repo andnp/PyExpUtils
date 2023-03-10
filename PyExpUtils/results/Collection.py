@@ -21,7 +21,12 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
 
     def apply(self, f: Callable[[pd.DataFrame], pd.DataFrame | None]):
         for key in self:
-            out = f(self[key])
+            item = self[key]
+            if item is None:
+                continue
+
+            out = f(item)
+
             if out is not None:
                 self[key] = out
 
