@@ -13,6 +13,14 @@ def subsetDF(df: pd.DataFrame, conds: Dict[str, Any]):
     mask = _buildMask(df, conds)
     return df[mask].reset_index(drop=True)
 
+def splitByValue(df: pd.DataFrame, col: str):
+    values = df[col].unique()
+    values.sort()
+
+    for v in values:
+        sub = df[df[col] == v]
+        yield v, sub
+
 # ------------------------
 # -- Internal Utilities --
 # ------------------------
