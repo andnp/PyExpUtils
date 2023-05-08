@@ -3,15 +3,12 @@ import os
 import glob
 import importlib
 import pandas as pd
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Type, overload
-from PyExpUtils.utils.dict import flatKeys, get
+from typing import Any, Callable, Dict, List, Optional, Type, overload
 from PyExpUtils.utils.NestedDict import NestedDict
 from PyExpUtils.utils.permute import set_at_path
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
-from PyExpUtils.results.backends.pandas import loadResults
-from PyExpUtils.results.results import ResultList
+from PyExpUtils.results.pandas import loadResults
 
-RList = TypeVar('RList', bound=ResultList)
 class ResultCollection(NestedDict[str, pd.DataFrame]):
     def __init__(self, Model: Optional[Type[ExperimentDescription]] = None):
         super().__init__(depth=2)
@@ -53,37 +50,8 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
                 exp = loadExperiment(p, Model)
                 df = loadResults(exp, file)
 
-                out[domain, alg] = df
-
-        return out
-
-    @classmethod
-    def fromResults(cls, env_alg_result: NestedDict[str, RList]) -> ResultCollection:
-        out = cls()
-
-        for domain, alg in env_alg_result:
-            results = env_alg_result[domain, alg]
-            results = list(results)
-            exp = results[0].exp
-            idx = results[0].idx
-
-            params = exp.getPermutation(idx)['metaParameters']
-            keys = flatKeys(params)
-            header = sorted(keys)
-
-            # avoid having to construct a list by appending
-            def _rowBuilder():
-                for r in results:
-                    pvalues = [get(r.params, k) for k in header]
-                    for run, data in enumerate(r.load()):
-                        if not isinstance(data, list):
-                            data = [data]
-
-                        yield pvalues + [run] + list(data)
-
-            rows = list(_rowBuilder())
-
-            out[domain, alg] = pd.DataFrame(rows, columns=header + ['run', 'data'])
+                if df is not None:
+                    out[domain, alg] = df
 
         return out
 

@@ -1,8 +1,5 @@
-from PyExpUtils.utils.dict import pick
-from copy import deepcopy
 import numpy as np
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
-from PyExpUtils.results.results import ResultList, Reducer, whereParametersEqual
+from copy import deepcopy
 from PyExpUtils.utils.types import T
 from PyExpUtils.utils.jit import try2jit
 from typing import Dict, List, NamedTuple, Tuple, Union, cast
@@ -21,32 +18,6 @@ class RankedCandidate(NamedTuple):
     name: Name
     rank: int
     score: float = 0
-
-def scoreMetaparameters(results: ResultList, exp: ExperimentDescription, reducer: Reducer = lambda x: float(np.mean(x))):
-    # gotta cache the results
-    all_results = list(results)
-
-    all_scores: List[ScoredCandidate] = []
-    for i in range(exp.numPermutations()):
-        params = pick(exp.getPermutation(i), exp.getKeys())
-        results = whereParametersEqual(all_results, params)
-        results = list(results)
-
-        # if data is missing, then mark the score as nan
-        # different ranking methods might handle these nans differently so defer to them
-        if len(results) == 0:
-            all_scores.append(ScoredCandidate(i, np.nan, np.nan))
-            continue
-
-        # there should only be one result
-        r = results[0]
-
-        point = reducer(r.mean())
-        stderr = reducer(r.stderr())
-
-        all_scores.append(ScoredCandidate(i, point, stderr))
-
-    return all_scores
 
 def confidenceInterval(scored: ScoredCandidate, c: float):
     lo = scored.score - c * scored.stderr
