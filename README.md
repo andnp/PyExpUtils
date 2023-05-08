@@ -1,5 +1,7 @@
 # PyExpUtils
 
+[![Test](https://github.com/andnp/PyExpUtils/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/andnp/PyExpUtils/actions/workflows/test.yml)
+
 Short for python experiment utilities.
 This is a collection of scripts and machine learning experiment management tools that I use whenever I have to use python.
 
