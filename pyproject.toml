@@ -38,8 +38,8 @@ description = "A small set of utilities for RL and ML experiments"
 authors = [
     {name = "Andy Patterson", email = "andnpatterson@gmail.com"},
 ]
-dependencies = ["numba>=0.52.0", "numpy>=1.21.5", "h5py>=3.1.0", "filelock>=3.0.0", "pandas"]
-requires-python = ">=3.8"
+dependencies = ["numba>=0.57.0", "numpy>=1.21.5", "filelock>=3.0.0", "pandas"]
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
