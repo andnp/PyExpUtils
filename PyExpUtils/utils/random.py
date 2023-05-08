@@ -1,17 +1,15 @@
 import numpy as np
-from typing import Any, Sequence
+from typing import Sequence, TypeVar
 from PyExpUtils.utils.arrays import argsmax
-from PyExpUtils.utils.types import NpList, T
 from PyExpUtils.utils.jit import try2jit
+
+T = TypeVar('T')
 
 # way faster than np.random.choice
 # arr is an array of probabilities, should sum to 1
-def sample(arr: NpList, rng: Any = np.random):
-    r = rng.random()
-    return _sample(np.asarray(arr), r)
-
 @try2jit
-def _sample(arr: np.ndarray, r: float):
+def sample(arr: np.ndarray, rng: np.random.Generator):
+    r = rng.random()
     s = 0
     for i, p in enumerate(arr):
         s += p
@@ -24,11 +22,13 @@ def _sample(arr: np.ndarray, r: float):
 
 # also much faster than np.random.choice
 # choose an element from a list with uniform random probability
-def choice(arr: Sequence[T], rng: Any = np.random) -> T:
+@try2jit
+def choice(arr: Sequence[T], rng: np.random.Generator) -> T:
     idxs = rng.permutation(len(arr))
     return arr[idxs[0]]
 
 # argmax that breaks ties randomly
-def argmax(vals: NpList, rng: Any = np.random):
-    ties = argsmax(np.asarray(vals))
+@try2jit
+def argmax(vals: np.ndarray, rng: np.random.Generator):
+    ties = argsmax(vals)
     return choice(ties, rng)
