@@ -1,7 +1,7 @@
 from typing import List
 import shutil
 import os
-import PyExpUtils.results.backends.pandas as PDBackend
+import PyExpUtils.results.pandas as PDBackend
 from PyExpUtils.results.tools import collapseRuns
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 import unittest

@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict, Generator, Iterable, List, TypeVar
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
-from PyExpUtils.results.backends.pandas import detectMissingIndices
+from PyExpUtils.results.pandas import detectMissingIndices
 
 T = TypeVar('T')
 def print_progress(size: int, it: Iterable[T]) -> Generator[T, Any, None]:
