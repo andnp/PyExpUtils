@@ -1,13 +1,14 @@
 import os
+import re
 import json
-from typing import Any, Dict, Iterator, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, Optional
+
 import PyExpUtils.runner.parallel as Parallel
-from PyExpUtils.utils.types import optionalCast
-from PyExpUtils.utils.dict import merge
 from PyExpUtils.utils.cmdline import flagString
 
 """doc
-Takes an integer number of hours and returns a well-formated time string.
+Takes an integer number of hours and returns a well-formatted time string.
 ```python
 time = hours(3)
 print(time) # -> '2:59:59
@@ -17,80 +18,176 @@ def hours(n: int):
     return f'{n-1}:59:59'
 
 """doc
-Takes an integer number of gigabytes and returns a well-formated memory string.
+Takes an integer number of gigabytes and returns a well-formatted memory string.
 ```python
-memory = gigs(4)
+memory = gb(4)
 print(memory) # -> '4G'
 ```
 """
-def gigs(n: int):
+def gb(n: int):
     return f'{n}G'
 
 
-# if other options are needed, this can be inherited and extended by the consumer
-class Options:
-    def __init__(self, d: Dict[str, Any]):
-        # mandatory slurm args
-        self.account = str(d['account'])
-        self.time = str(d['time'])
+@dataclass
+class SingleNodeOptions:
+    account: str
+    time: str
+    cores: int
+    mem_per_core: str | float
 
-        # optional slurm args
-        self.cores = optionalCast(int, d.get('cores'))
-        self.nodes = optionalCast(int, d.get('nodes'))
-        self.memPerCpu = optionalCast(str, d.get('memPerCpu'))
-        self.coresPerNode = optionalCast(int, d.get('coresPerNode'))
+    # task management args
+    sequential: int = 1
+    threads_per_task: int = 1
 
-        # task management utility args
-        self.sequential = optionalCast(int, d.get('sequential'))
-        self.parallel = optionalCast(int, d.get('parallel'))
+    # job reporting args
+    log_path: str = "$SCRATCH/job_output_%j.txt"
 
-        # job reporting args
-        self.output = optionalCast(str, d.get('output', '$SCRATCH/job_output_%j.txt'))
-        self.emailType = d.get('emailType')
-        self.email = d.get('email')
+@dataclass
+class MultiNodeOptions:
+    account: str
+    time: str
+    cores: int
+    mem_per_core: str | float
 
-        # sanity checking
-        supported_email_types = ['BEGIN', 'END', 'FAIL', 'REQUEUE', 'ALL']
-        if self.emailType and self.emailType not in supported_email_types:
-            print('WARN: <emailType> is not one of the known supported types:', supported_email_types)
+    # task management args
+    sequential: int = 1
 
-    def cmdArgs(self):
-        args = [
-            ('--account', self.account),
-            ('--time', self.time),
-            ('--ntasks', self.cores),
-            ('--nodes', self.nodes),
-            ('--ntasks-per-node', self.coresPerNode),
-            ('--mem-per-cpu', self.memPerCpu),
-            ('--output', self.output),
-            ('--mail-type', self.emailType),
-            ('--mail-user', self.email),
+    # job reporting args
+    log_path: str = "$SCRATCH/job_output_%j.txt"
+
+# ----------------
+# -- Validation --
+# ----------------
+def check_account(account: str):
+    assert account.startswith('rrg-') or account.startswith('def-')
+    assert not account.endswith('_cpu') and not account.endswith('_gpu')
+
+def check_time(time: str):
+    assert isinstance(time, str)
+
+    # while technically slurm is more permissive, I find being more explicit removes
+    # some common footguns. Example the "int:int" format is oft misunderstood as "hours:minutes"
+
+    # "hour:minute:second"
+    h_m_s = re.match(r'^\d+:\d+:\d+$', time)
+
+    # "days-hours"
+    d_h = re.match(r'^\d+-\d+$', time)
+
+    # "days-hours:minutes:seconds"
+    d_h_m_s = re.match(r'^\d+-\d+:\d+:\d+$', time)
+
+    assert h_m_s or d_h or d_h_m_s
+
+def normalize_memory(memory: float | str) -> str:
+    if isinstance(memory, (float, int)):
+        mbs = int(memory * 1024)
+        memory = f'{mbs}M'
+
+    assert isinstance(memory, str)
+    assert re.match(r'^\d+[G|M|K]$', memory)
+    return memory
+
+def shared_validation(options: SingleNodeOptions | MultiNodeOptions):
+    check_account(options.account)
+    check_time(options.time)
+    options.mem_per_core = normalize_memory(options.mem_per_core)
+
+
+def single_validation(options: SingleNodeOptions):
+    shared_validation(options)
+    # TODO: validate that the current cluster has nodes that can handle the specified request
+
+def multi_validation(options: MultiNodeOptions):
+    shared_validation(options)
+
+def validate(options: SingleNodeOptions | MultiNodeOptions):
+    if isinstance(options, SingleNodeOptions): single_validation(options)
+    elif isinstance(options, MultiNodeOptions): multi_validation(options)
+
+# ------------------
+# -- External API --
+# ------------------
+
+def memory_in_mb(memory: str | float) -> float:
+    memory = normalize_memory(memory)
+
+    if memory.endswith('M'):
+        return int(memory[:-1])
+
+    if memory.endswith('G'):
+        return int(memory[:-1]) * 1024
+
+    if memory.endswith('K'):
+        return int(memory[:-1]) / 1024
+
+    raise Exception('Unknown memory unit')
+
+def to_cmdline_flags(options: SingleNodeOptions | MultiNodeOptions):
+    validate(options)
+    args = [
+        ('--account', options.account),
+        ('--time', options.time),
+        ('--mem-per-cpu', options.mem_per_core),
+        ('--output', options.log_path),
+    ]
+
+    if isinstance(options, SingleNodeOptions):
+        args += [
+            ('--ntasks', 1),
+            ('--nodes', 1),
+            ('--ntasks-per-node', options.cores),
         ]
-        return flagString(args)
+
+    elif isinstance(options, MultiNodeOptions):
+        args += [
+            ('--ntasks', options.cores),
+            ('--cpus-per-task', 1),
+        ]
+
+    return flagString(args)
 
 def fromFile(path: str):
     with open(path, 'r') as f:
         d = json.load(f)
 
-    return Options(d)
+    assert 'type' in d, 'Need to specify scheduling strategy.'
+    t = d['type']
+    del d['type']
 
-def buildParallel(executable: str, tasks: Iterator[Any], opts: Dict[str, Any], parallelOpts: Dict[str, Any] = {}):
-    nodes = opts.get('nodes-per-process', 1)
-    threads = opts.get('threads-per-process', 1)
-    return Parallel.build(merge({
-        'executable': f'srun -N{nodes} -n{threads} --exclusive {executable}',
+    if t == 'single_node':
+        return SingleNodeOptions(**d)
+
+    elif t == 'multi_node':
+        return MultiNodeOptions(**d)
+
+    raise Exception('Unknown scheduling strategy')
+
+def buildParallel(executable: str, tasks: Iterable[Any], opts: SingleNodeOptions | MultiNodeOptions, parallelOpts: Dict[str, Any] = {}):
+    threads = 1
+    if isinstance(opts, SingleNodeOptions):
+        threads = opts.threads_per_task
+
+    cores = int(opts.cores / threads)
+
+    parallel_exec = f'srun -N1 -n{threads} --exclusive {executable}'
+    if isinstance(opts, SingleNodeOptions):
+        parallel_exec = executable
+
+    return Parallel.build({
+        'executable': parallel_exec,
         'tasks': tasks,
-        'cores': opts['ntasks'],
+        'cores': cores,
         'delay': 0.5, # because srun interacts with the scheduler, a slight delay helps prevent intermittent errors
-    }, parallelOpts))
+    } | parallelOpts)
 
-def schedule(script: str, opts: Optional[Options] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
+def schedule(script: str, opts: Optional[SingleNodeOptions | MultiNodeOptions] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
     with open(script_name, 'w') as f:
         f.write(script)
 
     cmdArgs = ''
     if opts is not None:
-        cmdArgs = opts.cmdArgs()
+        cmdArgs = to_cmdline_flags(opts)
 
     os.system(f'sbatch {cmdArgs} {script_name}')
 

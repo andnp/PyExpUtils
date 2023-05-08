@@ -11,7 +11,7 @@ class TestCmdline(unittest.TestCase):
         ]
 
         got = flagString(pairs)
-        expected = '--test=a --trial=b --exam=c'
+        expected = '--exam=c --test=a --trial=b'
 
         self.assertEqual(got, expected)
 
@@ -33,6 +33,6 @@ class TestCmdline(unittest.TestCase):
         ]
 
         got = flagString(pairs, ' ')
-        expected = '--test a --exam b'
+        expected = '--exam b --test a'
 
         self.assertEqual(got, expected)

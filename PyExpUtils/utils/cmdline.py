@@ -1,11 +1,13 @@
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Optional, Iterable, Tuple
 
-def flagString(pairs: Sequence[Tuple[str, Optional[Any]]], joiner: str = '='):
+def flagString(pairs: Iterable[Tuple[str, Optional[Any]]], joiner: str = '='):
+    pairs = filter(lambda p: p[1] is not None, pairs)
+    pairs = sorted(pairs)
+
     s = ''
     for i, pair in enumerate(pairs):
         key, value = pair
-        if value is not None:
-            if i > 0: s += ' '
-            s += f'{key}{joiner}{str(value)}'
+        if i > 0: s += ' '
+        s += f'{key}{joiner}{str(value)}'
 
     return s
