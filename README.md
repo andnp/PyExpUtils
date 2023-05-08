@@ -66,7 +66,7 @@ An example configuration file:
 **getConfig**:
 
 Memoized global configuration loader.
-Will read `config.json` from (only once) and return a Config object.
+Will read `config.json` (only once) and return a Config object.
 ```python
 config = getConfig()
 print(config.save_path) # -> 'results'
@@ -204,18 +204,18 @@ exp = loadExperiment('experiments/MountainCar-v0/sarsa.json')
 ### PyExpUtils/runner/Slurm.py
 **hours**:
 
-Takes an integer number of hours and returns a well-formated time string.
+Takes an integer number of hours and returns a well-formatted time string.
 ```python
 time = hours(3)
 print(time) # -> '2:59:59
 ```
 
 
-**gigs**:
+**gb**:
 
-Takes an integer number of gigabytes and returns a well-formated memory string.
+Takes an integer number of gigabytes and returns a well-formatted memory string.
 ```python
-memory = gigs(4)
+memory = gb(4)
 print(memory) # -> '4G'
 ```
 
@@ -230,191 +230,6 @@ Can specify a number of runs and will cycle over the permutations `runs` number 
 ```python
 for i in listIndices(exp, runs=2):
     print(i, exp.getRun(i)) # -> "0 0", "1 0", "2 0", ... "0 1", "1 1", ...
-```
-
-
-**listMissingResults**:
-
-Returns an iterator over indices which are missing results.
-Detects if a results is missing by checking if the results folder exists, but cannot check the contents of the results folder.
-If deeper checking is necessary, copy and modify the source of this function accordingly.
-
-Useful for rescheduling jobs that were cancelled due to timeout (or randomly dropped jobs, etc.).
-If no results are missing, then iterator is empty and the for loop is skipped.
-
-```python
-for i in listMissingResults(exp, runs=100):
-    print(i) # -> 0, 1, 4, 23, 1002, ...
-```
-
-
-### PyExpUtils/results/results.py
-**Result**:
-
-The `Result` objects allows performing operations over results lazily so that many file system calls can be avoided.
-This is extremely useful when doing large parameter sweeps and plotting over slices of parameters.
-The object stores some metadata about the result that can be inferred from the experiment description without needing to open the result file.
-
-```python
-results = loadResults(exp, 'returns.npy') # -> gives an iterator over Result objects
-
-for result in results:
-    print(result.path) # -> 'results/MountainCar-v0/SARSA/alpha-1.0_lambda-1.0/returns.npy'
-    print(result)
-
-# only load results from disk where alpha > 0.2
-results = filter(lambda res: res.params['alpha'] > 0.2, results)
-for result in results:
-    plot(result.load())
-
-```
-
-
-**reducer**:
-
-Takes a function that manipulates the result data.
-For example: useful for truncating data or looking at only final performance, etc.
-```python
-def getFirstNSteps(results, n):
-    for result in results:
-        yield result.reducer(lambda data: data[0:n])
-results = loadResults(exp, 'returns.npy')
-results = getFirstNSteps(results, 100)
-```
-
-
-**load**:
-
-Load the result from disk.
-The contents of the results file are cached, so as long as this result file is accessible (e.g. not garbage collected) you will only hit the filesystem once.
-This is important for distributed filesystems (like on computecanada) where filesystem calls are extremely expensive.
-Note that if the result does not exist (e.g. compute canada job timed out), then an error message will be printed but no exception will be thrown.
-This way plotting code can still continue to run with partial results.
-
-
-**ResultView**:
-
-A "window" over a `Result` object that allows changing the type of reducer on the object while still referencing the same memory cache.
-Useful for applying different views at the same results file without needing to load multiple copies of the result into memory or making multiple filesystem calls.
-Returned from the `Result.reducer` method.
-Maintains same API as a `Result` object and can be used interchangeably.
-
-```python
-results = loadResults(exp, 'returns.npy')
-for result in results:
-    view = result.reducer(lambda m: m.mean())
-    view2 = result.reducer(lambda m: m.std())
-```
-
-
-**splitOverParameter**:
-
-Utility function for sorting results into bins based on values of a metaParameter.
-Does not load results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-bins = splitOverParameter(results, 'alpha')
-print(bins) # -> { 1.0: [Result, Result, ...], 0.5: [Result, Result, ...], 0.25: [Result, Result, ...], ...}
-```
-
-
-**sliceOverParameter**:
-
-Utility function for sorting results by fixing all parameters except one, and returning a list of results for all other values of the other parameter.
-Takes the list of results to consider, a result whose parameter values you want to match, and the name of the parameter you want to sweep over.
-Does not load results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-result = next(results)
-slice = sliceOverParameter(results, result, 'lambda')
-
-print(slice) # => { 1.0: [Result, Result, ...], 0.99: [Result, Result, ...], 0.98: [Result, Result], ....}
-```
-
-
-**getBest**:
-
-Returns the best result over a list of results.
-Can defined "best" based on the `comparator` option; defaults to returning smallest result (e.g. smallest error).
-Can also find best result over a range of a learning curve by specifying the last n steps with `steps=n` or the last p percent of steps with `percent=p`; defaults to returning mean over whole learning curve.
-**Requires loading all results in list from disk.**
-
-```python
-results = loadResults(exp, 'returns.npy')
-
-# get the largest return over the last 10% of steps
-best = getBest(results, percent=0.1, comparator=lambda a, b: a > b)
-print(best.params) # -> { 'alpha': 1.0, 'lambda': 0.99 }
-
-results = loadResults(exp, 'rmsve.npy')
-
-# get the lowest rmsve over all steps
-best = getBest(results)
-print(best.params) # -> { 'alpha': 0.25, 'lambda': 1.0 }
-```
-
-
-**find**:
-
-Find a specific result based on the metaParameters of another result.
-Can optionally specify a list of parameters to ignore using for example `ignore=['alpha']`.
-Will return the first result that matches.
-Does not require loading results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-
-result = next(results)
-match = find(results, result, ignore=['lambda'])
-
-print(result.params) # -> { 'alpha': 1.0, 'lambda': 1.0 }
-print(match.params) # -> { 'alpha': 1.0, 'lambda': 0.98 }
-```
-
-
-**whereParameterEquals**:
-
-Utility method for filtering results based on the value of a particular parameter.
-If the listed parameter does not exist for some of the results (e.g. when comparing TD vs. GTD where TD does not have the second stepsize param), then those results will match True for the comparator.
-Does not require loading results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-results = whereParameterEquals(results, 'alpha', 0.25)
-
-for res in results:
-    print(res.params) # -> { 'alpha': 0.25, 'lambda': ... }
-```
-
-
-**whereParameterGreaterEq**:
-
-Utility method for filtering results based on the value of a particular parameter.
-If the listed parameter does not exist for some of the results (e.g. when comparing TD vs. GTD where TD does not have the second stepsize param), then those results will match True for the comparator.
-Does not require loading results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-results = whereParameterGreaterEq(results, 'alpha', 0.25)
-
-for res in results:
-    print(res.params) # -> { 'alpha': 0.25, 'lambda': ... }, { 'alpha': 0.5, 'lambda': ... }, ...
-```
-
-
-**loadResults**:
-
-Returns an iterator over all results that are expected to exist given a particular experiment.
-Takes the `ExperimentDescription` and the name of the result file.
-Does not load results from disk.
-
-```python
-results = loadResults(exp, 'returns.npy')
-
-for result in results:
-    print(result) # -> `<Result>`
 ```
 
 
