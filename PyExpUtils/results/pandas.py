@@ -120,14 +120,10 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
         df = pd.read_pickle(cache_file)
         return _subsetDFbyExp(df, exp)
 
-    header = getHeader(exp)
-
-    if len(files) == 0:
-        raise NoResultException('No result files found')
-
     partials = threadMap(_readUnevenCsv, files)
     df = pd.concat(partials, ignore_index=True)
 
+    header = getHeader(exp)
     nparams = len(header) + 1
     new_df = df.iloc[:, :nparams]
     new_df.columns = header + ['run']
