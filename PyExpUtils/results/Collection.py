@@ -3,11 +3,11 @@ import os
 import glob
 import importlib
 import pandas as pd
-from typing import Any, Callable, Dict, List, Optional, Type, overload
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, overload
 from PyExpUtils.utils.NestedDict import NestedDict
 from PyExpUtils.utils.permute import set_at_path
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
-from PyExpUtils.results.pandas import loadResults
+from PyExpUtils.results.pandas import loadAllResults
 
 class ResultCollection(NestedDict[str, pd.DataFrame]):
     def __init__(self, Model: Optional[Type[ExperimentDescription]] = None):
@@ -38,7 +38,7 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
         return out
 
     @classmethod
-    def fromExperiments(cls, file: str, path: Optional[str] = None, Model: Optional[Type[ExperimentDescription]] = None) -> ResultCollection:
+    def fromExperiments(cls, metrics: Optional[Iterable[str]] = None, path: Optional[str] = None, Model: Optional[Type[ExperimentDescription]] = None) -> ResultCollection:
         exp_files = findExperiments('{domain}', path)
 
         out = cls(Model=Model)
@@ -48,7 +48,7 @@ class ResultCollection(NestedDict[str, pd.DataFrame]):
                 alg = p.split('/')[-1].replace('.json', '')
 
                 exp = loadExperiment(p, Model)
-                df = loadResults(exp, file)
+                df = loadAllResults(exp, metrics=metrics)
 
                 if df is not None:
                     out[domain, alg] = df

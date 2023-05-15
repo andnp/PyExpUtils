@@ -2,8 +2,10 @@ from collections import defaultdict
 import os
 import glob
 import pandas as pd
+import PyExpUtils.utils.pandas as pdu
+
 from filelock import FileLock
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, Optional, Sequence, Union
 from PyExpUtils.FileSystemContext import FileSystemContext
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.indices import listIndices
@@ -12,6 +14,7 @@ from PyExpUtils.utils.Collector import Collector
 from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.types import NpList
 from PyExpUtils.utils.asyncio import threadMap
+from PyExpUtils.utils.iterable import filter_none
 
 class NoResultException(Exception):
     ...
@@ -96,8 +99,23 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
         with FileLock(path + '.lock'):
             df.to_csv(path, mode='a+', header=False, index=False)
 
+def loadAllResults(exp: ExperimentDescription, metrics: Optional[Iterable[str]] = None, base: str = './', use_cache: bool = True) -> Union[pd.DataFrame, None]:
+    if metrics is None:
+        metrics = get_result_filenames(exp, base)
 
-def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use_cache: bool = True) -> Union[pd.DataFrame, None]:
+    parts = (loadResults(exp, f, base, col=f, use_cache=use_cache) for f in metrics)
+    parts = filter_none(parts)
+    parts = list(parts)
+
+    if len(parts) == 0:
+        return None
+
+    header = getHeader(exp) + ['run']
+    df = pdu.outer(parts, on=header)
+
+    return df
+
+def loadResults(exp: ExperimentDescription, filename: str, base: str = './', col: Optional[str] = None, use_cache: bool = True) -> Union[pd.DataFrame, None]:
     context = exp.buildSaveContext(0, base=base)
 
     files = glob.glob(context.resolve(f'{filename}.*.csv'))
@@ -127,7 +145,12 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     nparams = len(header) + 1
     new_df = df.iloc[:, :nparams]
     new_df.columns = header + ['run']
-    new_df['data'] = df.iloc[:, nparams:].values.tolist()
+
+    # figure out where to put the data
+    if col is None:
+        col = 'data'
+
+    new_df[col] = df.iloc[:, nparams:].values.tolist()
 
     if use_cache:
         new_df.to_pickle(cache_file)
@@ -135,11 +158,13 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', use
     return _subsetDFbyExp(new_df, exp)
 
 
-def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: str, base: str = './'): # noqa: C901
+def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: Optional[str] = None, base: str = './'): # noqa: C901
     indices = listIndices(exp)
     nperms = exp.numPermutations()
     header = getHeader(exp)
 
+    r_files = get_result_filenames(exp, base)
+    filename = list(r_files)[0]
     df = loadResults(exp, filename, base=base)
     # ----------------------------------
     # -- first case: no existing data --
@@ -191,6 +216,15 @@ def getParamValues(exp: ExperimentDescription, idx: int, header: Optional[Sequen
     params = exp.getPermutation(idx)['metaParameters']
     return [get(params, k) for k in header]
 
+def get_result_filenames(exp: ExperimentDescription, base: str = './'):
+    context = exp.buildSaveContext(0, base=base)
+    files = glob.glob(context.resolve('*.*.csv')) + glob.glob(context.resolve('*.csv'))
+
+    if len(files) == 0:
+        return set[str]()
+
+    return set(map(lambda x: os.path.basename(x).split('.')[0], files))
+
 # ---------------
 # -- Utilities --
 # ---------------
@@ -225,7 +259,8 @@ def _flattenKeys(d: Dict[str, Any]):
 def _readUnevenCsv(f: str):
     with open(f, 'r') as temp_f:
         col_count = ( len(l.split(",")) for l in temp_f.readlines() )
-        names = list(map(str, range(0, max(col_count))))
+        m_cols = max(col_count)
+        names = list(map(str, range(0, m_cols)))
 
     return pd.read_csv(f, header=None, names=names)
 
