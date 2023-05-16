@@ -104,14 +104,14 @@ def loadAllResults(exp: ExperimentDescription, metrics: Optional[Iterable[str]] 
         metrics = get_result_filenames(exp, base)
 
     parts = (loadResults(exp, f, base, col=f, use_cache=use_cache) for f in metrics)
-    parts = filter_none(parts)
-    parts = list(parts)
+    dfs: Iterable[pd.DataFrame] = filter_none(parts)
+    dfs = list(dfs)
 
-    if len(parts) == 0:
+    if len(dfs) == 0:
         return None
 
     header = getHeader(exp) + ['run']
-    df = pdu.outer(parts, on=header)
+    df = pdu.outer(dfs, on=header)
 
     return df
 
@@ -171,6 +171,7 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: Option
         return
 
     filename = list(r_files)[0]
+    assert isinstance(filename, str)
     df = loadResults(exp, filename, base=base)
     # ----------------------------------
     # -- first case: no existing data --

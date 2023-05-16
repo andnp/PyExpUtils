@@ -1,4 +1,5 @@
 import numpy as np
+from abc import abstractmethod
 from typing import Any, Callable, Dict, Generator, List, Optional
 from PyExpUtils.utils.arrays import downsample, last, fillRest_
 from PyExpUtils.utils.NestedDict import NestedDict
@@ -9,6 +10,8 @@ from PyExpUtils.utils.NestedDict import NestedDict
 class _Sampler:
     def next(self, v: float) -> float | None: ...
     def next_eval(self, v: Callable[[], float]) -> float | None: ...
+
+    @abstractmethod
     def repeat(self, v: float, times: int) -> Generator[float, None, None]: ...
     def end(self) -> float | None: ...
 
@@ -25,6 +28,9 @@ class Identity(_Sampler):
 
     def next_eval(self, c: Callable[[], float]):
         return c()
+
+    def repeat(self, v: float, times: int):
+        for _ in range(times): yield v
 
     def end(self):
         return None
