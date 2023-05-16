@@ -1,17 +1,57 @@
-from typing import Any, Callable, Dict, List, Optional
+import numpy as np
+from typing import Any, Callable, Dict, Generator, List, Optional
 from PyExpUtils.utils.arrays import downsample, last, fillRest_
 from PyExpUtils.utils.NestedDict import NestedDict
 
-class Collector:
-    def __init__(self, idx: Optional[int] = None):
-        self._name_idx_data: NestedDict = NestedDict(depth=2, default=list)
+# ----------------
+# -- Interfaces --
+# ----------------
+class _Sampler:
+    def next(self, v: float) -> float | None: ...
+    def next_eval(self, v: Callable[[], float]) -> float | None: ...
+    def repeat(self, v: float, times: int) -> Generator[float, None, None]: ...
+    def end(self) -> float | None: ...
 
-        self.sample_rate: Dict[str, int] = {}
-        self.sample_clock: Dict[str, int] = {}
+class Ignore:
+    def __init__(self): ...
+    def next(self, v): return None
+    def next_eval(self, v): return None
+    def repeat(self, v, times): yield None
+    def end(self): return None
+
+class Identity(_Sampler):
+    def next(self, v: float):
+        return v
+
+    def next_eval(self, c: Callable[[], float]):
+        return c()
+
+    def end(self):
+        return None
+
+# ----------------
+# -- Main logic --
+# ----------------
+class Collector:
+    def __init__(self, config: Dict[str, _Sampler | Ignore] = {}, idx: Optional[int] = None, default: Identity | Ignore = Identity()):
+        self._name_idx_data: NestedDict = NestedDict(depth=2, default=list)
+        self._c = config
+
+        self._ignore = set(k for k, sampler in config.items() if isinstance(sampler, Ignore))
+        self._sampler: Dict[str, _Sampler] = {
+            k: sampler for k, sampler in config.items() if not isinstance(sampler, Ignore)
+        }
 
         self._idx: Optional[int] = idx
 
+        # create this once and cache it since it is stateless
+        # avoid recreating on every step
+        self._def = default
+
     def setIdx(self, idx: int):
+        if self._idx is not None:
+            self.reset()
+
         self._idx = idx
 
     def getIdx(self):
@@ -45,44 +85,135 @@ class Collector:
             self._name_idx_data[name, idx] = arr
 
     def collect(self, name: str, value: Any):
-        sample_rate = self.sample_rate.get(name, 1)
-        sample_clock = self.sample_clock.get(name, 0)
-        self.sample_clock[name] = sample_clock + 1
+        if name in self._ignore:
+            return
 
-        if sample_clock % sample_rate > 0:
+        v = self._sampler.get(name, self._def).next(value)
+        if v is None:
             return
 
         idx = self.getIdx()
         arr = self._name_idx_data[name, idx]
-        arr.append(value)
+        arr.append(v)
+
+    def repeat(self, name: str, value: float, times: int):
+        if name in self._ignore:
+            return
+
+        vs = self._sampler.get(name, self._def).repeat(value, times)
+
+        idx = self.getIdx()
+        arr = self._name_idx_data[name, idx]
+        for v in vs:
+            arr.append(v)
 
     def concat(self, name: str, values: List[Any]):
-        if name in self.sample_rate:
-            # don't just append to the array
-            # we need to make sure we respect sample rates
-            for v in values:
-                self.collect(name, v)
-
-            return
-
-        # otherwise, we can be smart and avoid a linear cost
-        idx = self.getIdx()
-        arr = self._name_idx_data[name, idx]
-        arr.extend(values)
+        for v in values:
+            self.collect(name, v)
 
     def evaluate(self, name: str, lmbda: Callable[[], Any]):
-        sample_rate = self.sample_rate.get(name, 1)
-        sample_clock = self.sample_clock.get(name, 0)
-        self.sample_clock[name] = sample_clock + 1
-
-        if sample_clock % sample_rate > 0:
+        if name in self._ignore:
             return
 
-        value = lmbda()
+        v = self._sampler.get(name, self._def).next_eval(lmbda)
+        if v is None:
+            return
+
         idx = self.getIdx()
         arr = self._name_idx_data[name, idx]
-        arr.append(value)
+        arr.append(v)
 
-    def setSampleRate(self, name: str, every: int):
-        self.sample_rate[name] = every
-        self.sample_clock[name] = 0
+    def reset(self):
+        for name in self._name_idx_data.keys():
+            if name not in self._sampler:
+                continue
+
+            v = self._sampler[name].end()
+            if v is None: continue
+            idx = self.getIdx()
+            arr = self._name_idx_data[name, idx]
+            arr.append(v)
+
+# --------------
+# -- Samplers --
+# --------------
+class Window(_Sampler):
+    def __init__(self, size: int):
+        self._b = np.empty(size, dtype=np.float64)
+        self._clock = 0
+        self._size = size
+
+    def next(self, v: float):
+        self._b[self._clock] = v
+        self._clock += 1
+
+        if self._clock == self._size:
+            m = self._b.mean()
+            self._clock = 0
+            return m
+
+    def next_eval(self, c: Callable[[], float]):
+        return self.next(c())
+
+    def repeat(self, v: float, times: int):
+        while times > 0:
+            r = self._size - self._clock
+            r = min(times, r)
+
+            # I can save a good chunk of compute if I know the whole window
+            # is filled with v. Then the mean is clearly also v.
+            if self._clock == 0 and r == self._size:
+                times -= r
+                yield v
+                continue
+
+            e = self._clock + r
+            self._b[self._clock:e] = v
+            self._clock = (self._clock + r) % self._size
+
+            times -= r
+
+            if self._clock == 0:
+                yield self._b.mean()
+
+    def end(self):
+        out = None
+        if self._clock > 0:
+            out = self._b[:self._clock].mean()
+
+        self._clock = 0
+        return out
+
+class Subsample(_Sampler):
+    def __init__(self, freq: int):
+        self._clock = 0
+        self._freq = freq
+
+    def next(self, v: float):
+        tick = self._clock % self._freq == 0
+        self._clock += 1
+
+        if tick:
+            return v
+
+    def next_eval(self, c: Callable[[], float]):
+        tick = self._clock % self._freq == 0
+        self._clock += 1
+
+        if tick:
+            return c()
+
+    def repeat(self, v: float, times: int):
+        if self._clock == 0:
+            yield v
+
+        r = self._clock + times
+        reps = int(r // self._freq)
+        for _ in range(reps):
+            yield v
+
+        self._clock = r % self._freq
+
+    def end(self):
+        self._clock = 0
+        return None

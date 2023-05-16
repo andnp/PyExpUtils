@@ -1,4 +1,4 @@
-from PyExpUtils.utils.Collector import Collector
+from PyExpUtils.utils.Collector import Collector, Window, Subsample
 import unittest
 
 class TestCollector(unittest.TestCase):
@@ -48,19 +48,6 @@ class TestCollector(unittest.TestCase):
 
         self.assertEqual(got, expected)
 
-    def test_setSampleRate(self):
-        collector = Collector(idx=0)
-
-        collector.setSampleRate('data', 3)
-
-        for i in range(14):
-            collector.collect('data', i)
-
-        got = collector.get('data', 0)
-        expected = [0, 3, 6, 9, 12]
-
-        self.assertEqual(got, expected)
-
     def test_concat(self):
         collector = Collector(idx=0)
 
@@ -72,17 +59,6 @@ class TestCollector(unittest.TestCase):
 
         got = collector.get('data', 0)
         expected = [1, 2, 3, 4, 5, 6]
-
-        self.assertEqual(got, expected)
-
-        collector = Collector(idx=0)
-        collector.setSampleRate('data', 3)
-
-        collector.concat('data', data1)
-        collector.concat('data', data2)
-
-        got = collector.get('data', 0)
-        expected = [1, 4]
 
         self.assertEqual(got, expected)
 
@@ -98,17 +74,89 @@ class TestCollector(unittest.TestCase):
 
         self.assertEqual(got, expected)
 
-        collector = Collector(idx=0)
-        collector.setSampleRate('data', 2)
+    def test_window(self):
+        collector = Collector(
+            config={
+                'a': Window(3),
+            },
+            idx=0,
+        )
 
-        for i in range(7):
-            ev = lambda: i + 1
-            collector.evaluate('data', ev)
+        collector.collect('a', 0)
+        collector.collect('a', 1)
+        collector.collect('a', 5)
+        collector.collect('a', 3)
 
-        expected = [1, 3, 5, 7]
-        got = collector.get('data', 0)
+        self.assertEqual(collector.get('a', 0), [2.0])
 
-        self.assertEqual(got, expected)
+        collector.collect('a', 4)
+        collector.collect('a', 5)
+
+        self.assertEqual(collector.get('a', 0), [2.0, 4.0])
+
+    def test_subsample(self):
+        collector = Collector(
+            config={
+                'a': Subsample(3),
+            },
+            idx=0,
+        )
+
+        collector.collect('a', 0)
+        collector.collect('a', 1)
+        collector.collect('a', 2)
+
+        self.assertEqual(collector.get('a', 0), [0])
+
+        collector.collect('a', 3)
+
+        self.assertEqual(collector.get('a', 0), [0, 3])
+
+    def test_window_repeat(self):
+        collector = Collector(
+            config={
+                'a': Window(9),
+            },
+            idx=0,
+        )
+
+        # nothing happens if below window size
+        collector.repeat('a', 1, 4)
+        self.assertEqual(collector.get('a', 0), [])
+
+        collector.repeat('a', 2, 3)
+        self.assertEqual(collector.get('a', 0), [])
+
+        # adds one value if goes over window size
+        collector.repeat('a', 4, 4)
+        self.assertEqual(collector.get('a', 0), [2.0])
+
+        # adds multiple values if much larger than window size
+        collector.repeat('a', 4, 21)
+        self.assertEqual(collector.get('a', 0), [2.0, 4.0, 4.0])
+
+    def test_subsample_repeat(self):
+        collector = Collector(
+            config={
+                'a': Subsample(9),
+            },
+            idx=0,
+        )
+
+        # only the first element is added
+        collector.repeat('a', 1, 4)
+        self.assertEqual(collector.get('a', 0), [1])
+
+        collector.repeat('a', 2, 3)
+        self.assertEqual(collector.get('a', 0), [1])
+
+        # when over size, second element is added
+        collector.repeat('a', 4, 4)
+        self.assertEqual(collector.get('a', 0), [1, 4])
+
+        # adds multiple values if much larger than window size
+        collector.repeat('a', 6, 21)
+        self.assertEqual(collector.get('a', 0), [1, 4, 6, 6])
 
     def test_downsample(self):
         collector = Collector(idx=0)
