@@ -164,6 +164,12 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, filename: Option
     header = getHeader(exp)
 
     r_files = get_result_filenames(exp, base)
+    if len(r_files) == 0:
+        for idx in indices:
+            for run in range(runs):
+                yield idx + run * nperms
+        return
+
     filename = list(r_files)[0]
     df = loadResults(exp, filename, base=base)
     # ----------------------------------
