@@ -134,9 +134,9 @@ def to_cmdline_flags(options: SingleNodeOptions | MultiNodeOptions):
 
     if isinstance(options, SingleNodeOptions):
         args += [
-            ('--ntasks', 1),
+            ('--ntasks', options.cores),
             ('--nodes', 1),
-            ('--ntasks-per-node', options.cores),
+            ('--cpus-per-task', 1),
         ]
 
     elif isinstance(options, MultiNodeOptions):
