@@ -12,7 +12,7 @@ class TestSlurm(unittest.TestCase):
         )
 
         got = to_cmdline_flags(opts)
-        expected = '--account=def-whitem --mem-per-cpu=4096M --nodes=1 --ntasks=1 --ntasks-per-node=2 --output=$SCRATCH/job_output_%j.txt --time=2:59:59'
+        expected = '--account=def-whitem --cpus-per-task=1 --mem-per-cpu=4096M --nodes=1 --ntasks=2 --output=$SCRATCH/job_output_%j.txt --time=2:59:59'
         self.assertEqual(got, expected)
 
         opts = MultiNodeOptions(
