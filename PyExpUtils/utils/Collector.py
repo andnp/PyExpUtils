@@ -227,10 +227,10 @@ class Subsample(_Sampler):
 class MovingAverage(_Sampler):
     def __init__(self, decay: float):
         self._decay = decay
-        self.z = 0
+        self.z = 0.
 
     def next(self, v: float):
-        self.z = self._decay * self.z + (1 - self._decay) * v
+        self.z = self._decay * self.z + (1. - self._decay) * v
         return self.z
 
     def next_eval(self, c: Callable[[], float]):
