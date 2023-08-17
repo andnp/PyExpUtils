@@ -150,7 +150,11 @@ def loadResults(exp: ExperimentDescription, filename: str, base: str = './', col
     if col is None:
         col = 'data'
 
-    new_df[col] = df.iloc[:, nparams:].values.tolist()
+    data_cols = df.iloc[:, nparams:].values
+    if data_cols.shape[1] == 1:
+        new_df[col] = data_cols[:, 0]
+    else:
+        new_df[col] = df.iloc[:, nparams:].values.tolist()
 
     if use_cache:
         new_df.to_pickle(cache_file)
