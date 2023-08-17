@@ -71,6 +71,10 @@ class Collector:
         all_idxs = self._name_idx_data[name]
         return list(all_idxs[k] for k in sorted(all_idxs.keys()))
 
+    def get_last(self, name: str):
+        arr = self.get(name, self.getIdx())
+        return arr[-1]
+
     def keys(self):
         return self._name_idx_data.keys()
 
@@ -236,6 +240,33 @@ class MovingAverage(_Sampler):
     def next_eval(self, c: Callable[[], float]):
         v = c()
         return self.next(v)
+
+    def repeat(self, v: float, times: int):
+        for _ in range(times):
+            self.next(v)
+
+    def end(self):
+        return None
+
+class Pipe(_Sampler):
+    def __init__(self, *args: _Sampler) -> None:
+        self._subs = args
+
+    def next(self, v: float) -> float | None:
+        out = v
+        for sub in self._subs:
+            out = sub.next(out)
+            if out is None: return None
+
+        return out
+
+    def next_eval(self, v: Callable[[], float]) -> float | None:
+        out = None
+        for sub in self._subs:
+            out = sub.next_eval(v)
+            if out is None: return None
+
+        return out
 
     def repeat(self, v: float, times: int):
         for _ in range(times):
