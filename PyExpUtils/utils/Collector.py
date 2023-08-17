@@ -253,18 +253,21 @@ class Pipe(_Sampler):
         self._subs = args
 
     def next(self, v: float) -> float | None:
-        out = v
+        out: float | None = v
         for sub in self._subs:
-            out = sub.next(out)
             if out is None: return None
+            out = sub.next(out)
 
         return out
 
     def next_eval(self, v: Callable[[], float]) -> float | None:
-        out = None
-        for sub in self._subs:
-            out = sub.next_eval(v)
+        subs = iter(self._subs)
+        first = next(subs)
+        out = first.next_eval(v)
+
+        for sub in subs:
             if out is None: return None
+            out = sub.next(out)
 
         return out
 
