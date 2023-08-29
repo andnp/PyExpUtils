@@ -8,7 +8,7 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from PyExpUtils.utils.Collector import Collector
+from PyExpUtils.collection.Collector import Collector
 
 class TestPandas(unittest.TestCase):
     files: List[str] = []

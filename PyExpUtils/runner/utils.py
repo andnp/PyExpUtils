@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict, Generator, Iterable, List, TypeVar
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
-from PyExpUtils.results.pandas import detectMissingIndices
+from PyExpUtils.results.sqlite import detectMissingIndices
 
 T = TypeVar('T')
 def print_progress(size: int, it: Iterable[T]) -> Generator[T, Any, None]:
@@ -24,13 +24,13 @@ def approximate_cost(jobs: int, cores_per_job: int, mem_per_core: float, hours: 
 
     return core_years
 
-def gather_missing_indices(experiment_paths: Iterable[str], runs: int, result_file: str, loader: Callable[[str], ExperimentDescription] = loadExperiment, base: str = './'):
+def gather_missing_indices(experiment_paths: Iterable[str], runs: int, loader: Callable[[str], ExperimentDescription] = loadExperiment, base: str = './'):
     path_to_indices: Dict[str, List[int]] = {}
 
     for path in experiment_paths:
         exp = loader(path)
 
-        indices = detectMissingIndices(exp, runs, result_file, base=base)
+        indices = detectMissingIndices(exp, runs, base=base)
         indices = sorted(indices)
         path_to_indices[path] = indices
 

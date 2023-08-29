@@ -40,6 +40,15 @@ def flatKeys(d: Dict[Any, Any]) -> List[DictPath]:
 
     return out
 
+def flatDict(d: Dict[Any, Any]) -> Dict[DictPath, Any]:
+    out: Dict[DictPath, Any] = {}
+
+    for key in flatKeys(d):
+        v = get(d, key)
+        out[key] = v
+
+    return out
+
 
 def hyphenatedStringify(d: Dict[Any, Any]):
     sorted_keys = sorted(flatKeys(d))

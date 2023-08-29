@@ -10,7 +10,7 @@ from PyExpUtils.FileSystemContext import FileSystemContext
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.results.indices import listIndices
 from PyExpUtils.results.tools import subsetDF
-from PyExpUtils.utils.Collector import Collector
+from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.utils.dict import flatKeys, get
 from PyExpUtils.utils.types import NpList
 from PyExpUtils.utils.asyncio import threadMap
