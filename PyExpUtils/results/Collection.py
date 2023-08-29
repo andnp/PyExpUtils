@@ -2,103 +2,119 @@ from __future__ import annotations
 import os
 import glob
 import importlib
+import dataclasses
 import pandas as pd
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, overload
-from PyExpUtils.utils.NestedDict import NestedDict
-from PyExpUtils.utils.permute import set_at_path
+
+from typing import Callable, Dict, Generic, Optional, Sequence, Type, TypeVar
+
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
-from PyExpUtils.results.pandas import loadAllResults
+from PyExpUtils.results.sqlite import loadAllResults
+from PyExpUtils.results.tools import getHeader
 
-class ResultCollection(NestedDict[str, pd.DataFrame]):
-    def __init__(self, Model: Optional[Type[ExperimentDescription]] = None):
-        super().__init__(depth=2)
 
-        self._data: Dict[str, Dict[str, pd.DataFrame]] = {}
+Exp = TypeVar('Exp', bound=ExperimentDescription)
+
+
+@dataclasses.dataclass
+class Result(Generic[Exp]):
+    exp: Exp
+    df: pd.DataFrame
+    path: str
+
+class ResultCollection:
+    def __init__(self, Model: Optional[Type[Exp]] = None):
+        self._data: Dict[str, Result] = {}
         self._Model = Model
 
     def apply(self, f: Callable[[pd.DataFrame], pd.DataFrame | None]):
-        for key in self:
-            item = self[key]
-            if item is None:
-                continue
-
-            out = f(item)
+        for item in self._data.values():
+            out = f(item.df)
 
             if out is not None:
-                self[key] = out
+                item.df = out
 
         return self
 
     def map(self, f: Callable[[pd.DataFrame], pd.DataFrame]):
         out = ResultCollection(self._Model)
 
-        for key in self:
-            out[key] = f(self[key])
+        for key, item in self._data.items():
+            out._data[key] = Result(
+                exp=item.exp,
+                df=f(item.df),
+                path=item.path,
+            )
 
         return out
+
+    def combine(self, folder_columns: Sequence[str | None], file_col: str | None):
+        out: pd.DataFrame | None = None
+        for path in self._data.keys():
+            parts = path.split('/')
+            assert len(parts) == len(folder_columns) + 1
+
+            df = self._data[path].df
+
+            for fcol, part in zip(folder_columns, parts):
+                if fcol is None: continue
+
+                df[fcol] = part
+
+            if file_col is not None:
+                df[file_col] = parts[-1].replace('.json', '')
+
+            if out is None:
+                out = df
+            else:
+                out = pd.concat((out, df), axis=0, ignore_index=True)
+
+        if out is not None:
+            out.reset_index(drop=True, inplace=True)
+
+        return out
+
+    def get_hyperparameter_columns(self):
+        hypers = set[str]()
+
+        for res in self._data.values():
+            sub = getHeader(res.exp)
+            hypers |= set(sub)
+
+        return list(sorted(hypers))
+
+    def get_any_exp(self):
+        k = next(iter(self._data))
+        return self._data[k].exp
+
+    def __iter__(self):
+        return iter(self._data.values())
 
     @classmethod
-    def fromExperiments(cls, metrics: Optional[Iterable[str]] = None, path: Optional[str] = None, Model: Optional[Type[ExperimentDescription]] = None) -> ResultCollection:
-        exp_files = findExperiments('{domain}', path)
+    def fromExperiments(cls, path: Optional[str] = None, Model: Optional[Type[Exp]] = None) -> ResultCollection:
+        paths = findExperiments(path)
 
         out = cls(Model=Model)
-        for domain in exp_files:
-            paths = exp_files[domain]
-            for p in paths:
-                alg = p.split('/')[-1].replace('.json', '')
+        for p in paths:
+            exp = loadExperiment(p, Model)
+            df = loadAllResults(exp)
 
-                exp = loadExperiment(p, Model)
-                df = loadAllResults(exp, metrics=metrics)
-
-                if df is not None:
-                    out[domain, alg] = df
+            if df is not None:
+                out._data[p] = Result(
+                    exp=exp,
+                    df=df,
+                    path=p,
+                )
 
         return out
 
-@overload
-def findExperiments(key: str, path: Optional[str] = None) -> Dict[str, Any]: ...
-@overload
-def findExperiments() -> List[str]: ...
 
-def findExperiments(key: Optional[str] = None, path: Optional[str] = None):
+def findExperiments(path: Optional[str] = None):
     if path is None:
         main_file = importlib.import_module('__main__').__file__
         assert main_file is not None
         path = os.path.dirname(main_file)
 
-    files = glob.glob(f'{path}/**/*.json', recursive=True)
+    paths = glob.glob(f'{path}/**/*.json', recursive=True)
 
-    if key is None:
-        return files
-
-    out: Dict[str, Any] = {}
-    kparts = key.split('/')
-    for i, fname in enumerate(files):
-        # remove the common experiment path leading up to here
-        end = fname.replace(path, '')
-        # if there is a nested structure, we might have a leading '/' now,
-        # so for consistency, remove that
-        if end.startswith('/'): end = end[1:]
-
-        fparts = end.split('/')
-
-        out_key = ''
-        for kpart, fpart in zip(kparts, fparts):
-            wrapped = kpart.startswith('{') and kpart.endswith('}')
-
-            if not wrapped:
-                continue
-
-            if fpart.endswith('.json'):
-                fpart = fpart.replace('.json', '')
-
-            if out_key == '':
-                out_key = fpart
-
-            else:
-                out_key += f'.{fpart}'
-
-        out_key += f'.[{i}]'
-        set_at_path(out, out_key, fname)
-
-    return out
+    project = os.getcwd()
+    return [ p.replace(f'{project}/', '') for p in paths ]
