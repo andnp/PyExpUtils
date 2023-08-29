@@ -1,4 +1,4 @@
-from PyExpUtils.utils.Collector import Collector, Window, Subsample
+from PyExpUtils.collection.Collector import Collector, Window, Subsample
 import unittest
 
 class TestCollector(unittest.TestCase):
