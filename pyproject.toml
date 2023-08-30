@@ -17,7 +17,6 @@ verify_ssl = true
 name = "pypi"
 [tool.pdm.dev-dependencies]
 dev = [
-    "mypy>=0.942",
     "flake8>=5.2.0",
     "commitizen",
     "pre-commit",
@@ -26,6 +25,7 @@ dev = [
     "build",
     "twine",
     "vistir==0.6.1",
+    "pyright>=1.1.324",
 ]
 
 [tool.mypy]

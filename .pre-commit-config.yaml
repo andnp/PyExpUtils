@@ -12,6 +12,6 @@ repos:
     stages:
     - commit-msg
 - repo: https://github.com/pdm-project/pdm
-  rev: 2.5.0
+  rev: 2.8.0
   hooks:
     - id: pdm-lock-check
