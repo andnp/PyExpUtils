@@ -60,8 +60,8 @@ class Collector:
         self._def = default
 
         # cache some useful metadata
-        self._idxs = set()
-        self._keys = set()
+        self._idxs = set[int]()
+        self._keys = set[str]()
 
     # -------------
     # -- Context --
