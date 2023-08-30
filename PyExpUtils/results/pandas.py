@@ -81,7 +81,7 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
         keys = list(collector.keys())
 
     for filename in keys:
-        for idx in collector.indices(filename):
+        for idx in collector.indices():
             data = collector.get(filename, idx)
 
             params = exp.getPermutation(idx)['metaParameters']
