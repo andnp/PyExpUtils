@@ -1,7 +1,7 @@
 [tool]
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "5.2.0"
+version = "6.0.0"
 tag_format = "$version"
 version_files = ["pyproject.toml"]
 
@@ -17,7 +17,7 @@ verify_ssl = true
 name = "pypi"
 [tool.pdm.dev-dependencies]
 dev = [
-    "flake8>=5.2.0",
+    "flake8>=6.0.0",
     "commitizen",
     "pre-commit",
     "matplotlib",
@@ -33,7 +33,7 @@ mypy_path = "typings"
 
 [project]
 name = "PyExpUtils-andnp"
-version = "5.2.0"
+version = "6.0.0"
 description = "A small set of utilities for RL and ML experiments"
 authors = [
     {name = "Andy Patterson", email = "andnpatterson@gmail.com"},
