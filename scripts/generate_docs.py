@@ -30,9 +30,9 @@ Imagine the case where you are sweeping over 2 meta-parameters:
 Here there are 9 total possible permutations: `{alpha: 0.01, epsilon: 0.1}`, `{alpha: 0.01, epsilon: 0.2}`, ...
 
 These are indexed by a single numeric value.
-To run each permutation once, simply execute indices `i \in [0..8]`.
-To run each permutation twice, multiply by 2: `i \in [0..17]`.
-In general for `n` runs and `p` permutations: `i \in [0..(n*p - 1)]`.
+To run each permutation once, simply execute indices `i \\in [0..8]`.
+To run each permutation twice, multiply by 2: `i \\in [0..17]`.
+In general for `n` runs and `p` permutations: `i \\in [0..(n*p - 1)]`.
 
 
 """
@@ -65,7 +65,8 @@ def scanFile(f):
         if not in_doc and '"""doc' in line:
             in_doc = True
             # count the number of whitespaces to offset all lines in docs by
-            tabs = len(re.match(r'\W*', line)[0]) - 3
+            m = re.match(r'\W*', line) or ['']
+            tabs = len(m[0]) - 3
             continue
 
         if not in_doc:
