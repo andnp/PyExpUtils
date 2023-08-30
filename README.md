@@ -200,6 +200,50 @@ exp = loadExperiment('experiments/MountainCar-v0/sarsa.json')
 ```
 
 
+## collection
+### PyExpUtils/collection/Collector.py
+**Collector**:
+
+A frame-based data collection utility.
+The collector stores some context---which index is currently being run, what is the current timestep, etc.---
+and associates collected data with this context.
+
+Example usage:
+```python
+collector = Collector(
+  config={
+    # a dictionary mapping keys -> data preprocessors
+    # for instance performing fixed-window averaging
+    'return': Window(100),
+    # or subsampling 1 of every 100 values
+    'reward': Subsample(100),
+    # or moving averages
+    'error': MovingAverage(0.99),
+    # or ignored entirely
+    'special': Ignore(),
+  },
+  # by default, if a key is not mentioned above it is stored as-is
+  # however this can be changed by passing a default preprocessor
+  default=Identity()
+)
+
+# tell the collector what idx of the experiment we are currently processing
+collector.setIdx(0)
+
+for step in range(exp.max_steps):
+  # tell the collector to increment the frame
+  collector.next_frame()
+
+  # these values will be associated with the current idx and frame
+  collector.collect('reward', r)
+  collector.collect('error', delta)
+
+  # not all values need to be stored at each frame
+  if step % 100 == 0:
+    collector.collect('special', 'test value')
+```
+
+
 ## runner
 ### PyExpUtils/runner/Slurm.py
 **hours**:

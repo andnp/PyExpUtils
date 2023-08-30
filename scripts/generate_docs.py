@@ -1,9 +1,11 @@
 import glob
 import re
 
-MODULES = ['models', 'runner', 'results', 'utils']
+MODULES = ['models', 'collection', 'runner', 'results', 'utils']
 
 doc_str = """# PyExpUtils
+
+[![Test](https://github.com/andnp/PyExpUtils/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/andnp/PyExpUtils/actions/workflows/test.yml)
 
 Short for python experiment utilities.
 This is a collection of scripts and machine learning experiment management tools that I use whenever I have to use python.
