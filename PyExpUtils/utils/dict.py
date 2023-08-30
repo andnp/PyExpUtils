@@ -101,7 +101,7 @@ def get(d: Dict[str, Union[Dict[Any, Any], List[Any], Any]], key: DictPath, defa
 
     return el
 
-def equal(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
+def equal(d1: Dict[Any, Any], d2: Dict[Any, Any], ignore: Sequence[Any] = []):
     for k in list(d1.keys()) + list(d2.keys()):
         if k in ignore:
             continue
@@ -114,7 +114,7 @@ def equal(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
 
     return True
 
-def subset(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
+def subset(d1: Dict[Any, Any], d2: Dict[Any, Any], ignore: Sequence[Any] = []):
     for k in d1:
         if k in ignore:
             continue
@@ -132,7 +132,7 @@ def subset(d1: Dict[T, Any], d2: Dict[T, Any], ignore: Sequence[T] = []):
 
     return True
 
-def partialEqual(d1: Dict[T, Any], d2: Dict[T, Any]):
+def partialEqual(d1: Dict[Any, Any], d2: Dict[Any, Any]):
     for k in d1:
         if k not in d2:
             continue
