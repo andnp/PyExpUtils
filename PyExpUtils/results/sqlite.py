@@ -141,11 +141,16 @@ def write_row(cur: sqlite3.Cursor, data: Dict[str, Any]):
     cur.execute(f'INSERT INTO results({header}) VALUES({vals})', values)
 
 def query(cur: sqlite3.Cursor, what: str, where: Dict[str, Any]):
-    constraints = ' and '.join([f'"{k}"={v}' for k, v in where.items()])
+    constraints = ' and '.join([f'"{k}"={_maybe_quote(v)}' for k, v in where.items()])
     res = cur.execute(f'SELECT {what} FROM results WHERE {constraints}')
     rows = res.fetchall()
     return rows
 
+
+def _maybe_quote(v: Any):
+    if isinstance(v, str):
+        return _quote(v)
+    return v
 
 def _quote(s: str):
     return f'"{s}"'
