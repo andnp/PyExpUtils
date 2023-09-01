@@ -26,10 +26,11 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
     columns = header + metrics + ['seed', 'frame']
 
     db_file = context.resolve('results.db')
-    if not context.exists('results.db'):
-        build_db(db_file, columns)
-    else:
-        ensure_table_compatible(db_file, columns)
+    with FileLock(db_file + '.lock'):
+        if not context.exists('results.db'):
+            build_db(db_file, columns)
+        else:
+            ensure_table_compatible(db_file, columns)
 
     con = sqlite3.connect(db_file, timeout=30)
     cur = con.cursor()
@@ -93,14 +94,13 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 # -- Utilities --
 # ---------------
 def build_db(db_file: str, columns: Iterable[str]):
-    with FileLock(db_file + '.lock'):
-        con = sqlite3.connect(db_file, timeout=30)
-        cur = con.cursor()
+    con = sqlite3.connect(db_file, timeout=30)
+    cur = con.cursor()
 
-        # make sure the table exists and has the needed columns
-        maybe_make_table(cur, columns)
-        con.commit()
-        con.close()
+    # make sure the table exists and has the needed columns
+    maybe_make_table(cur, columns)
+    con.commit()
+    con.close()
 
 def get_tables(cur: sqlite3.Cursor):
     res = cur.execute("SELECT name FROM sqlite_master")
@@ -128,16 +128,15 @@ def add_cols(cur: sqlite3.Cursor, columns: Iterable[str]):
         cur.execute(f'ALTER TABLE results ADD COLUMN {col}')
 
 def ensure_table_compatible(db_file: str, columns: Iterable[str]):
-    with FileLock(db_file + '.lock'):
-        con = sqlite3.connect(db_file, timeout=30)
-        cur = con.cursor()
+    con = sqlite3.connect(db_file, timeout=30)
+    cur = con.cursor()
 
-        columns = set(columns)
-        current_cols = set(get_cols(cur))
-        needed_cols = columns - current_cols
+    columns = set(columns)
+    current_cols = set(get_cols(cur))
+    needed_cols = columns - current_cols
 
-        if needed_cols:
-            add_cols(cur, needed_cols)
+    if needed_cols:
+        add_cols(cur, needed_cols)
 
 def write_row(cur: sqlite3.Cursor, data: Dict[str, Any]):
     columns, values = zip(*data.items())
