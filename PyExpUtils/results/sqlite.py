@@ -28,11 +28,12 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
     db_file = context.resolve('results.db')
     if not context.exists('results.db'):
         build_db(db_file, columns)
+    else:
+        ensure_table_compatible(db_file, columns)
 
     con = sqlite3.connect(db_file, timeout=30)
     cur = con.cursor()
 
-    ensure_table_compatible(cur, columns)
     for idx in collector.indices():
         seed = exp.getRun(idx)
         params = getParamsAsDict(exp, idx, header)
@@ -126,13 +127,17 @@ def add_cols(cur: sqlite3.Cursor, columns: Iterable[str]):
     for col in columns:
         cur.execute(f'ALTER TABLE results ADD COLUMN {col}')
 
-def ensure_table_compatible(cur: sqlite3.Cursor, columns: Iterable[str]):
-    columns = set(columns)
-    current_cols = set(get_cols(cur))
-    needed_cols = columns - current_cols
+def ensure_table_compatible(db_file: str, columns: Iterable[str]):
+    with FileLock(db_file + '.lock'):
+        con = sqlite3.connect(db_file, timeout=30)
+        cur = con.cursor()
 
-    if needed_cols:
-        add_cols(cur, needed_cols)
+        columns = set(columns)
+        current_cols = set(get_cols(cur))
+        needed_cols = columns - current_cols
+
+        if needed_cols:
+            add_cols(cur, needed_cols)
 
 def write_row(cur: sqlite3.Cursor, data: Dict[str, Any]):
     columns, values = zip(*data.items())
