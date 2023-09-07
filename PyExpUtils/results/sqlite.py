@@ -75,15 +75,17 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 
     db_file = context.resolve('results.db')
     con = sqlite3.connect(db_file, timeout=30)
-    cur = con.cursor()
+    df = pd.read_sql_query('SELECT * FROM results', con)
 
     expected_seeds = set(range(runs))
     for idx in listIndices(exp):
         params = exp.getPermutation(idx)['metaParameters']
         flat_params = flatDict(params)
+        q = ' & '.join(f'`{k}`=={v}' for k, v in flat_params.items())
 
-        rows = query(cur, 'seed', flat_params)
-        seeds = set(r[0] for r in rows)
+        rows = df.query(q)
+        seeds = rows['seed'].unique()
+        seeds = set(seeds)
 
         needed = expected_seeds - seeds
         for seed in needed:
