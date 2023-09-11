@@ -27,26 +27,24 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
 
     db_file = context.resolve('results.db')
     with FileLock(db_file + '.lock'):
-        if not context.exists('results.db'):
-            build_db(db_file, columns)
-        else:
-            ensure_table_compatible(db_file, columns)
+        con = sqlite3.connect(db_file, timeout=30)
+        cur = con.cursor()
 
-    con = sqlite3.connect(db_file, timeout=30)
-    cur = con.cursor()
+        maybe_make_table(cur, columns)
+        ensure_table_compatible(cur, columns)
 
-    for idx in collector.indices():
-        seed = exp.getRun(idx)
-        params = getParamsAsDict(exp, idx, header)
-        params['seed'] = seed
-        frames = collector.get_frames(idx)
+        for idx in collector.indices():
+            seed = exp.getRun(idx)
+            params = getParamsAsDict(exp, idx, header)
+            params['seed'] = seed
+            frames = collector.get_frames(idx)
 
-        for frame in frames:
-            del frame['idx']
-            write_row(cur, params | frame)
+            for frame in frames:
+                del frame['idx']
+                write_row(cur, params | frame)
 
-    con.commit()
-    con.close()
+        con.commit()
+        con.close()
 
 # -------------
 # -- Loading --
@@ -95,15 +93,6 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 # ---------------
 # -- Utilities --
 # ---------------
-def build_db(db_file: str, columns: Iterable[str]):
-    con = sqlite3.connect(db_file, timeout=30)
-    cur = con.cursor()
-
-    # make sure the table exists and has the needed columns
-    maybe_make_table(cur, columns)
-    con.commit()
-    con.close()
-
 def get_tables(cur: sqlite3.Cursor):
     res = cur.execute("SELECT name FROM sqlite_master")
     return res.fetchall()
@@ -129,10 +118,7 @@ def add_cols(cur: sqlite3.Cursor, columns: Iterable[str]):
     for col in columns:
         cur.execute(f'ALTER TABLE results ADD COLUMN {col}')
 
-def ensure_table_compatible(db_file: str, columns: Iterable[str]):
-    con = sqlite3.connect(db_file, timeout=30)
-    cur = con.cursor()
-
+def ensure_table_compatible(cur: sqlite3.Cursor, columns: Iterable[str]):
     columns = set(columns)
     current_cols = set(get_cols(cur))
     needed_cols = columns - current_cols
