@@ -20,10 +20,10 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
     context = exp.buildSaveContext(0, base=base)
     context.ensureExists()
 
-    header = getHeader(exp)
+    hypers = getHeader(exp)
     metrics = list(collector.keys())
 
-    columns = header + metrics + ['seed', 'frame']
+    columns = hypers + metrics + ['seed', 'frame']
 
     db_file = context.resolve('results.db')
     with FileLock(db_file + '.lock'):
@@ -33,15 +33,22 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
         maybe_make_table(cur, columns)
         ensure_table_compatible(cur, columns)
 
+        rows = []
         for idx in collector.indices():
             seed = exp.getRun(idx)
-            params = getParamsAsDict(exp, idx, header)
+            params = getParamsAsDict(exp, idx, hypers)
             params['seed'] = seed
             frames = collector.get_frames(idx)
 
             for frame in frames:
-                del frame['idx']
-                write_row(cur, params | frame)
+                row_dict = params | frame
+                del row_dict['idx']
+                vals = tuple(row_dict.get(k, None) for k in columns)
+                rows.append(vals)
+
+        cols_str = ', '.join(map(_quote, columns))
+        v_inserter = ', '.join('?' * len(columns))
+        cur.executemany(f'INSERT INTO results({cols_str}) VALUES({v_inserter})', rows)
 
         con.commit()
         con.close()
@@ -126,11 +133,6 @@ def ensure_table_compatible(cur: sqlite3.Cursor, columns: Iterable[str]):
     if needed_cols:
         add_cols(cur, needed_cols)
 
-def write_row(cur: sqlite3.Cursor, data: Dict[str, Any]):
-    columns, values = zip(*data.items())
-    header = ', '.join(map(_quote, columns))
-    vals = ', '.join('?' * len(data))
-    cur.execute(f'INSERT INTO results({header}) VALUES({vals})', values)
 
 def query(cur: sqlite3.Cursor, what: str, where: Dict[str, Any]):
     constraints = ' and '.join([f'"{k}"={_maybe_quote(v)}' for k, v in where.items()])
