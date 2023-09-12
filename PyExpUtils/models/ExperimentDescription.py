@@ -10,7 +10,7 @@ from PyExpUtils.models.Config import getConfig
 from PyExpUtils.FileSystemContext import FileSystemContext
 
 # type checking
-from typing import Optional, Union, List, Dict, Any, Type
+from typing import Optional, Union, List, Dict, Any, Type, TypeVar
 Keys = Union[str, List[str]]
 
 """doc
@@ -107,6 +107,13 @@ class ExperimentDescription:
         # since we are caching, we need to guarantee modifications to the returned dict
         # are not propagated to the cached dict
         return copy.deepcopy(d)
+
+    def get_hypers(self, idx: int):
+        keys = self.getKeys()
+        assert len(keys) == 1
+
+        params = self.getPermutation(idx)
+        return params[keys[0]]
 
     """doc
     Gives the total number of parameter permutations.
@@ -239,6 +246,9 @@ class ExperimentDescription:
         path = self.interpolateSavePath(idx, key)
         return FileSystemContext(path, base)
 
+
+Exp = TypeVar('Exp', bound=ExperimentDescription)
+
 """doc
 Loads an ExperimentDescription from a JSON file (preferred way to make ExperimentDescriptions).
 
@@ -246,10 +256,7 @@ Loads an ExperimentDescription from a JSON file (preferred way to make Experimen
 exp = loadExperiment('experiments/MountainCar-v0/sarsa.json')
 ```
 """
-def loadExperiment(path: str, Model: Optional[Type[ExperimentDescription]] = None):
-    if Model is None:
-        Model = ExperimentDescription
-
+def loadExperiment(path: str, Model: Type[Exp] = ExperimentDescription):
     with open(path, 'r') as f:
         d = json.load(f)
 

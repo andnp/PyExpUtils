@@ -5,7 +5,7 @@ import importlib
 import dataclasses
 import pandas as pd
 
-from typing import Callable, Dict, Generic, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Dict, Generic, Optional, Sequence, Type, TypeVar
 
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
 from PyExpUtils.results.sqlite import loadAllResults
@@ -13,6 +13,7 @@ from PyExpUtils.results.tools import getHeader
 
 
 Exp = TypeVar('Exp', bound=ExperimentDescription)
+CExp = TypeVar('CExp', bound=ExperimentDescription)
 
 
 @dataclasses.dataclass
@@ -21,9 +22,9 @@ class Result(Generic[Exp]):
     df: pd.DataFrame
     path: str
 
-class ResultCollection:
+class ResultCollection(Generic[Exp]):
     def __init__(self, Model: Optional[Type[Exp]] = None):
-        self._data: Dict[str, Result] = {}
+        self._data: Dict[str, Result[Exp]] = {}
         self._Model = Model
 
     def apply(self, f: Callable[[pd.DataFrame], pd.DataFrame | None]):
@@ -90,10 +91,10 @@ class ResultCollection:
         return iter(self._data.values())
 
     @classmethod
-    def fromExperiments(cls, path: Optional[str] = None, Model: Optional[Type[Exp]] = None) -> ResultCollection:
+    def fromExperiments(cls, path: Optional[str] = None, Model: Type[CExp] = ExperimentDescription) -> ResultCollection[CExp]:
         paths = findExperiments(path)
 
-        out = cls(Model=Model)
+        out: Any = cls(Model=Model)
         for p in paths:
             exp = loadExperiment(p, Model)
             df = loadAllResults(exp)
