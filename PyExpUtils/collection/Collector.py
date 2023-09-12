@@ -54,6 +54,7 @@ class Collector:
         self._idx: int | None = idx
         self._frame: int = -1
         self._cur: Dict[str, Any] = {}
+        self._con: Dict[str, Any] = {}
 
         # create this once and cache it since it is stateless
         # avoid recreating on every step
@@ -66,6 +67,14 @@ class Collector:
     # -------------
     # -- Context --
     # -------------
+    def setContext(self, context: Dict[str, Any]):
+        self._con |= context
+        self._keys |= set(context.keys())
+
+    def addContext(self, key: str, val: Any):
+        self._con[key] = val
+        self._keys.add(key)
+
     def setIdx(self, idx: int):
         if self._idx is not None:
             self.reset()
@@ -85,7 +94,7 @@ class Collector:
         if self._cur:
             self._cur['idx'] = self.getIdx()
             self._cur['frame'] = self._frame - 1
-            self._d.append(self._cur)
+            self._d.append(self._cur | self._con)
             self._cur = {}
 
     def reset(self):

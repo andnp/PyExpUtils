@@ -23,7 +23,7 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
     hypers = getHeader(exp)
     metrics = list(collector.keys())
 
-    columns = hypers + metrics + ['seed', 'frame']
+    columns = set(hypers + metrics + ['seed', 'frame'])
 
     db_file = context.resolve('results.db')
     with FileLock(db_file + '.lock'):
