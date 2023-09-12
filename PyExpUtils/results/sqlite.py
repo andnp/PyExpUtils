@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import PyExpUtils.utils.pandas as pdu
 
 from filelock import FileLock
 from typing import Any, Iterable, Dict
@@ -80,15 +81,22 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 
     db_file = context.resolve('results.db')
     con = sqlite3.connect(db_file, timeout=30)
+    cur = con.cursor()
+
+    tables = get_tables(cur)
+    if 'results' not in tables:
+        yield from listIndices(exp, runs)
+        con.close()
+        return
+
     df = pd.read_sql_query('SELECT * FROM results', con)
 
     expected_seeds = set(range(runs))
     for idx in listIndices(exp):
         params = exp.getPermutation(idx)['metaParameters']
         flat_params = flatDict(params)
-        q = ' & '.join(f'`{k}`=={v}' for k, v in flat_params.items())
+        rows = pdu.query(df, flat_params)
 
-        rows = df.query(q)
         seeds = rows['seed'].unique()
         seeds = set(seeds)
 
@@ -96,13 +104,15 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
         for seed in needed:
             yield idx + seed * nperms
 
+    con.close()
+
 
 # ---------------
 # -- Utilities --
 # ---------------
 def get_tables(cur: sqlite3.Cursor):
     res = cur.execute("SELECT name FROM sqlite_master")
-    return res.fetchall()
+    return [r[0] for r in res.fetchall()]
 
 def make_table(cur: sqlite3.Cursor, columns: Iterable[str]):
     cols = ', '.join(map(_quote, columns))
@@ -111,7 +121,7 @@ def make_table(cur: sqlite3.Cursor, columns: Iterable[str]):
 def maybe_make_table(cur: sqlite3.Cursor, columns: Iterable[str]):
     tables = get_tables(cur)
 
-    if not any('results' in t[0] for t in tables):
+    if 'results' not in tables:
         make_table(cur, columns)
 
 def get_cols(cur: sqlite3.Cursor):
