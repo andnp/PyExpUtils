@@ -17,5 +17,13 @@ def query(df: pd.DataFrame, d: Dict[str, Any]):
     for k in keys:
         assert k in df, f"Can't query df. Unknown key {k} in {df.columns}"
 
-    q = ' & '.join(f'`{k}`=={v}' for k, v in d.items())
+    q = ' & '.join(f'`{k}`=={_maybe_quote(v)}' for k, v in d.items())
     return df.query(q)
+
+def _maybe_quote(v: Any):
+    if isinstance(v, str):
+        return _quote(v)
+    return v
+
+def _quote(s: str):
+    return f'"{s}"'
