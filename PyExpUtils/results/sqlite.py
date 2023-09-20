@@ -74,6 +74,9 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
     context = exp.buildSaveContext(0, base=base)
     nperms = exp.numPermutations()
 
+    header = getHeader(exp)
+    columns = header + ['seed']
+
     # first case: no data
     if not context.exists('results.db'):
         yield from listIndices(exp, runs)
@@ -89,7 +92,8 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
         con.close()
         return
 
-    df = pd.read_sql_query('SELECT * FROM results', con)
+    col_str = ','.join(map(_quote, columns))
+    df = pd.read_sql_query(f'SELECT DISTINCT {col_str} FROM results', con)
 
     expected_seeds = set(range(runs))
     for idx in listIndices(exp):
