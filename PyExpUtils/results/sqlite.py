@@ -106,7 +106,6 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 
     con.close()
 
-
 # ---------------
 # -- Utilities --
 # ---------------
