@@ -3,7 +3,7 @@ import pandas as pd
 import PyExpUtils.utils.pandas as pdu
 
 from filelock import FileLock
-from typing import Any, Iterable, Dict
+from typing import Any, Iterable, Dict, Sequence
 
 from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
@@ -57,15 +57,25 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
 # -------------
 # -- Loading --
 # -------------
-def loadAllResults(exp: ExperimentDescription, base: str = './') -> pd.DataFrame | None:
+def loadAllResults(exp: ExperimentDescription, base: str = './', metrics: Sequence[str] | None = None) -> pd.DataFrame | None:
     context = exp.buildSaveContext(0, base=base)
     if not context.exists('results.db'):
         return None
 
+    header = getHeader(exp)
+
     path = context.resolve('results.db')
     con = sqlite3.connect(path, timeout=30)
 
-    df = pd.read_sql_query('SELECT * FROM results', con)
+    if metrics is None:
+        df = pd.read_sql_query('SELECT * FROM results', con)
+    else:
+        cols = set(header) | set(metrics) | { 'frame', 'seed' }
+        col_str = ','.join(map(_quote, cols))
+
+        non_null = ' AND '.join(f'{m} IS NOT NULL' for m in metrics)
+        df = pd.read_sql_query(f'SELECT DISTINCT {col_str} FROM results WHERE {non_null}', con)
+
     con.close()
 
     return _subsetDFbyExp(df, exp)
