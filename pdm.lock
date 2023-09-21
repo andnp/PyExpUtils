@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:c81ba941609a254eaab5e0259590e25511919ebce541a64e19b9bc3887aaee48"
+content_hash = "sha256:ac421f1271e63c4ad95653e668478ff6e0e94f232063dfd1363f114a94adb2b8"
 
 [[package]]
 name = "argcomplete"
@@ -150,6 +150,21 @@ summary = "Python parser for the CommonMark Markdown spec"
 files = [
     {file = "commonmark-0.9.1-py2.py3-none-any.whl", hash = "sha256:da2f38c92590f83de410ba1a3cbceafbc74fee9def35f9251ba9a971d6d66fd9"},
     {file = "commonmark-0.9.1.tar.gz", hash = "sha256:452f9dc859be7f06631ddcb328b6919c67984aca654e5fefb3914d54691aed60"},
+]
+
+[[package]]
+name = "connectorx"
+version = "0.3.2"
+summary = ""
+files = [
+    {file = "connectorx-0.3.2-cp310-cp310-macosx_10_7_x86_64.whl", hash = "sha256:98274242c64a2831a8b1c86e0fa2c46a557dd8cbcf00c3adcf5a602455fb02d7"},
+    {file = "connectorx-0.3.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e2b11ba49efd330a7348bef3ce09c98218eea21d92a12dd75cd8f0ade5c99ffc"},
+    {file = "connectorx-0.3.2-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:3f6431a30304271f9137bd7854d2850231041f95164c6b749d9ede4c0d92d10c"},
+    {file = "connectorx-0.3.2-cp310-none-win_amd64.whl", hash = "sha256:b370ebe8f44d2049254dd506f17c62322cc2db1b782a57f22cce01ddcdcc8fed"},
+    {file = "connectorx-0.3.2-cp311-cp311-macosx_10_7_x86_64.whl", hash = "sha256:d5277fc936a80da3d1dcf889020e45da3493179070d9be8a47500c7001fab967"},
+    {file = "connectorx-0.3.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8cc6c963237c3d3b02f7dcd47e1be9fc6e8b93ef0aeed8694f65c62b3c4688a1"},
+    {file = "connectorx-0.3.2-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:9403902685b3423cba786db01a36f36efef90ae3d429e45b74dadb4ae9e328dc"},
+    {file = "connectorx-0.3.2-cp311-none-win_amd64.whl", hash = "sha256:6b5f518194a2cf12d5ad031d488ded4e4678eff3b63551856f2a6f1a83197bb8"},
 ]
 
 [[package]]

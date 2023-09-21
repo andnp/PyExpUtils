@@ -5,7 +5,7 @@ import importlib
 import dataclasses
 import pandas as pd
 
-from typing import Any, Callable, Dict, Generic, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Dict, Generic, Optional, Sequence, Tuple, Type, TypeVar
 from multiprocessing.dummy import Pool
 
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
@@ -91,9 +91,28 @@ class ResultCollection(Generic[Exp]):
     def __iter__(self):
         return iter(self._data.values())
 
+    def __getitem__(self, key: str | Tuple[str, ...]) -> Result:
+        if isinstance(key, str):
+            return self._data[key]
+
+        matches = []
+        for k in self._data:
+            parts = k.split('/')
+            parts[-1] = parts[-1].replace('.json', '')
+            if all(any(query == part for part in parts) for query in key):
+                matches.append(self._data[k])
+
+        if len(matches) == 0:
+            raise KeyError('Could not find an experiment matching query')
+
+        if len(matches) > 1:
+            raise KeyError(f'Found too many experiments for query: {len(matches)}')
+
+        return matches[0]
+
     @classmethod
     def fromExperiments(cls, metrics: Sequence[str] | None = None, path: Optional[str] = None, Model: Type[CExp] = ExperimentDescription) -> ResultCollection[CExp]:
-        pool = Pool(4)
+        pool = Pool()
         paths = findExperiments(path)
         out: Any = cls(Model=Model)
 
