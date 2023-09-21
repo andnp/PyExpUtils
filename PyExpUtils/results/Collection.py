@@ -6,6 +6,7 @@ import dataclasses
 import pandas as pd
 
 from typing import Any, Callable, Dict, Generic, Optional, Sequence, Type, TypeVar
+from multiprocessing.dummy import Pool
 
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription, loadExperiment
 from PyExpUtils.results.sqlite import loadAllResults
@@ -91,13 +92,14 @@ class ResultCollection(Generic[Exp]):
         return iter(self._data.values())
 
     @classmethod
-    def fromExperiments(cls, path: Optional[str] = None, Model: Type[CExp] = ExperimentDescription) -> ResultCollection[CExp]:
+    def fromExperiments(cls, metrics: Sequence[str] | None = None, path: Optional[str] = None, Model: Type[CExp] = ExperimentDescription) -> ResultCollection[CExp]:
+        pool = Pool(4)
         paths = findExperiments(path)
-
         out: Any = cls(Model=Model)
-        for p in paths:
+
+        def load_path(p: str):
             exp = loadExperiment(p, Model)
-            df = loadAllResults(exp)
+            df = loadAllResults(exp, metrics=metrics)
 
             if df is not None:
                 out._data[p] = Result(
@@ -105,6 +107,8 @@ class ResultCollection(Generic[Exp]):
                     df=df,
                     path=p,
                 )
+
+        pool.map(load_path, paths)
 
         return out
 
