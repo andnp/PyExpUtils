@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:ac421f1271e63c4ad95653e668478ff6e0e94f232063dfd1363f114a94adb2b8"
+content_hash = "sha256:01c9de44b2f3087253090803a66735e8c52805bbb06b3768fcaf64073270985a"
 
 [[package]]
 name = "argcomplete"
