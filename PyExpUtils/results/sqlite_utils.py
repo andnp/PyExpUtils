@@ -1,4 +1,6 @@
 import sqlite3
+import pandas as pd
+import connectorx as cx
 from typing import Any, Dict, Iterable, List
 
 
@@ -54,3 +56,18 @@ def maybe_quote(v: Any):
 
 def quote(s: str):
     return f'"{s}"'
+
+
+def read_to_df(db_name: str, query: str, part: str | None = None) -> pd.DataFrame:
+    # it appears that connectorx has some bugs that cause it to periodically fail.
+    # but when it _does_ work, it is 10x faster. So let's try connectorx first, then
+    # fall back to the slower pandas for now.
+    try:
+        n = 4 if part is not None else None
+        return cx.read_sql(f'sqlite://{db_name}', query, partition_on=part, partition_num=n)
+    except Exception as e:
+        print(e)
+        con = sqlite3.connect(db_name)
+        df = pd.read_sql_query(query, con)
+        con.close()
+        return df

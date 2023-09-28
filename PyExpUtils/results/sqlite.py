@@ -2,7 +2,6 @@ import os
 import sqlite3
 import logging
 import pandas as pd
-import connectorx as cx
 import PyExpUtils.results.sqlite_utils as sqlu
 
 from filelock import FileLock
@@ -78,21 +77,18 @@ def loadAllResults(exp: ExperimentDescription, base: str = './', metrics: Sequen
     path = context.resolve('results.db')
 
     maybe_migrate(path, exp)
-    con = sqlite3.connect(path, timeout=30)
-
     if metrics is None:
-        df = cx.read_sql(f'sqlite://{path}', 'SELECT * FROM results')
+        df = sqlu.read_to_df(path, 'SELECT * FROM results')
     else:
         cols = set(metrics) | { 'frame', 'seed', 'config_id' }
         col_str = ','.join(map(sqlu.quote, cols))
 
         non_null = ' AND '.join(f'{m} IS NOT NULL' for m in metrics)
-        df = cx.read_sql(f'sqlite://{path}', f'SELECT {col_str} FROM results WHERE {non_null}', partition_on='config_id', partition_num=4)
+        df = sqlu.read_to_df(path, f'SELECT {col_str} FROM results WHERE {non_null}', part='config_id')
 
-    config_df = cx.read_sql(f'sqlite://{path}', 'SELECT * FROM hyperparameters')
+    config_df = sqlu.read_to_df(path, 'SELECT * FROM hyperparameters')
     df = df.merge(config_df, on='config_id')
 
-    con.close()
     return _subsetDFbyExp(df, exp)
 
 def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'): # noqa: C901
@@ -117,7 +113,7 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
         con.close()
         return
 
-    df = cx.read_sql(f'sqlite://{db_file}', 'SELECT DISTINCT config_id,seed FROM results')
+    df = sqlu.read_to_df(db_file, 'SELECT DISTINCT config_id,seed FROM results')
 
     expected_seeds = set(range(runs))
     for idx in listIndices(exp):
