@@ -65,7 +65,7 @@ def read_to_df(db_name: str, query: str, part: str | None = None) -> pd.DataFram
     try:
         n = 4 if part is not None else None
         return cx.read_sql(f'sqlite://{db_name}', query, partition_on=part, partition_num=n)
-    except Exception as e:
+    except BaseException as e:
         print(e)
         con = sqlite3.connect(db_name)
         df = pd.read_sql_query(query, con)
