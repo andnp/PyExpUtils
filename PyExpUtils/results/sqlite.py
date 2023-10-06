@@ -14,9 +14,6 @@ from PyExpUtils.results.migrations import maybe_migrate
 from PyExpUtils.results.tools import getHeader, getParamValues
 from PyExpUtils.results._utils.shared import hash_values
 
-# TODO: migrate these to a shared location
-from PyExpUtils.results.pandas import _subsetDFbyExp
-
 logger = logging.getLogger('PyExpUtils')
 
 
@@ -69,6 +66,45 @@ def saveCollector(exp: ExperimentDescription, collector: Collector, base: str = 
 # -------------
 # -- Loading --
 # -------------
+def loadResultsOnly(exp: ExperimentDescription, base: str = './', metrics: Sequence[str] | None = None):
+    context = exp.buildSaveContext(0, base=base)
+    if not context.exists('results.db'):
+        return None
+
+    path = context.resolve('results.db')
+    maybe_migrate(path, exp)
+
+    con = sqlite3.connect(path)
+    cur = con.cursor()
+
+    header = getHeader(exp)
+    valid_cids = [
+        get_cid(cur, header, exp, i) for i in listIndices(exp)
+    ]
+
+    constraints = ','.join(map(str, valid_cids))
+    constraints = f'config_id IN ({constraints})'
+    if metrics is None:
+        df = sqlu.read_to_df(path, f'SELECT * FROM results WHERE {constraints}', part='config_id')
+    else:
+        cols = set(metrics) | { 'frame', 'seed', 'config_id' }
+        col_str = ','.join(map(sqlu.quote, cols))
+
+        non_null = ' AND '.join(f'{m} IS NOT NULL' for m in metrics)
+        df = sqlu.read_to_df(path, f'SELECT {col_str} FROM results WHERE {non_null} AND {constraints}', part='config_id')
+
+    return df
+
+def loadHypersOnly(exp: ExperimentDescription, base: str = './') -> pd.DataFrame | None:
+    context = exp.buildSaveContext(0, base=base)
+    if not context.exists('results.db'):
+        return None
+
+    path = context.resolve('results.db')
+    config_df = sqlu.read_to_df(path, 'SELECT * FROM hyperparameters')
+
+    return config_df
+
 def loadAllResults(exp: ExperimentDescription, base: str = './', metrics: Sequence[str] | None = None) -> pd.DataFrame | None:
     context = exp.buildSaveContext(0, base=base)
     if not context.exists('results.db'):
@@ -76,20 +112,13 @@ def loadAllResults(exp: ExperimentDescription, base: str = './', metrics: Sequen
 
     path = context.resolve('results.db')
 
-    maybe_migrate(path, exp)
-    if metrics is None:
-        df = sqlu.read_to_df(path, 'SELECT * FROM results')
-    else:
-        cols = set(metrics) | { 'frame', 'seed', 'config_id' }
-        col_str = ','.join(map(sqlu.quote, cols))
-
-        non_null = ' AND '.join(f'{m} IS NOT NULL' for m in metrics)
-        df = sqlu.read_to_df(path, f'SELECT {col_str} FROM results WHERE {non_null}', part='config_id')
-
+    result_df = loadResultsOnly(exp, base, metrics)
     config_df = sqlu.read_to_df(path, 'SELECT * FROM hyperparameters')
-    df = df.merge(config_df, on='config_id')
 
-    return _subsetDFbyExp(df, exp)
+    assert result_df is not None
+    df = result_df.merge(config_df, on='config_id')
+
+    return df
 
 def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'): # noqa: C901
     context = exp.buildSaveContext(0, base=base)
@@ -132,24 +161,29 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
 # ---------------
 # -- Utilities --
 # ---------------
-
 def get_cid(cur: sqlite3.Cursor, header: Sequence[str], exp: ExperimentDescription, idx: int) -> int:
     values = getParamValues(exp, idx, header)
 
     # first see if a cid already exists
-    c = sqlu.constraints_from_lists(header, values)
-    res = cur.execute(f'SELECT config_id FROM hyperparameters WHERE {c}')
-    cids = res.fetchall()
+    if len(header) > 0:
+        c = sqlu.constraints_from_lists(header, values)
+        res = cur.execute(f'SELECT config_id FROM hyperparameters WHERE {c}')
+    else:
+        res = cur.execute('SELECT config_id FROM hyperparameters')
 
+    cids = res.fetchall()
     if len(cids) > 0:
         return cids[0][0]
 
     # otherwise create and store a cid
     cid = hash_values(values)
 
-    c_str = ','.join(map(sqlu.maybe_quote, header))
-    v_str = ','.join(map(str, map(sqlu.maybe_quote, values)))
-    cur.execute(f'INSERT INTO hyperparameters({c_str},config_id) VALUES({v_str},{cid})')
+    if len(header) > 0:
+        c_str = ','.join(map(sqlu.maybe_quote, header))
+        v_str = ','.join(map(str, map(sqlu.maybe_quote, values)))
+        cur.execute(f'INSERT INTO hyperparameters({c_str},config_id) VALUES({v_str},{cid})')
+    else:
+        cur.execute(f'INSERT INTO hyperparameters(config_id) VALUES({cid})')
 
     return cid
 
