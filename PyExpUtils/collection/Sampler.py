@@ -83,26 +83,31 @@ class Window(Sampler):
         return out
 
 class Subsample(Sampler):
-    def __init__(self, freq: int):
+    def __init__(self, freq: int, trailing_edge: bool = False, first: bool = True):
         self._clock = 0
         self._freq = freq
 
+        self._first = first
+        self._target = 0
+        if trailing_edge:
+            self._target = freq - 1
+
     def next(self, v: float):
-        tick = self._clock % self._freq == 0
+        tick = self._clock % self._freq == self._target or (self._first and self._clock == 0)
         self._clock += 1
 
         if tick:
             return v
 
     def next_eval(self, c: Callable[[], float]):
-        tick = self._clock % self._freq == 0
+        tick = self._clock % self._freq == self._target or (self._first and self._clock == 0)
         self._clock += 1
 
         if tick:
             return c()
 
     def repeat(self, v: float, times: int):
-        if self._clock == 0:
+        if self._clock % self._freq == self._target or (self._first and self._clock == 0):
             yield v
 
         r = self._clock + times
@@ -110,7 +115,7 @@ class Subsample(Sampler):
         for _ in range(reps):
             yield v
 
-        self._clock = r % self._freq
+        self._clock += times
 
     def end(self):
         self._clock = 0
