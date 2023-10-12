@@ -142,15 +142,12 @@ def detectMissingIndices(exp: ExperimentDescription, runs: int, base: str = './'
         con.close()
         return
 
-    df = sqlu.read_to_df(db_file, 'SELECT DISTINCT config_id,seed FROM results')
-
     expected_seeds = set(range(runs))
     for idx in listIndices(exp):
         cid = get_cid(cur, header, exp, idx)
 
-        rows = df[df['config_id'] == cid]
-        seeds = rows['seed'].unique()
-        seeds = set(seeds)
+        rows = cur.execute(f'SELECT DISTINCT seed FROM results WHERE config_id={cid}').fetchall()
+        seeds = set(d[0] for d in rows)
 
         needed = expected_seeds - seeds
         for seed in needed:
