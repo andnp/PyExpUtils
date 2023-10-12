@@ -82,6 +82,17 @@ class LazyResultCollection(Generic[Exp]):
 
         return list(sorted(hypers))
 
+    def get_hyperparameter_values(self, hyper: str):
+        values = set()
+
+        for path in self._paths:
+            exp = loadExperiment(path, Model=self._Model)
+            v = set(exp._d['metaParameters'].get(hyper, []))
+
+            values |= v
+
+        return values
+
     def __iter__(self):
         return map(self.result, self._paths)
 
