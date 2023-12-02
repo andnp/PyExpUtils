@@ -37,12 +37,10 @@ def ensure_table_compatible(cur: sqlite3.Cursor, name: str, columns: Iterable[st
     if needed_cols:
         add_cols(cur, needed_cols)
 
-
-def query(cur: sqlite3.Cursor, what: str, where: Dict[str, Any]):
-    constraints = ' and '.join([f'"{k}"={maybe_quote(v)}' for k, v in where.items()])
-    res = cur.execute(f'SELECT {what} FROM results WHERE {constraints}')
+def query(cur: sqlite3.Cursor, q: str):
+    res = cur.execute(q)
     rows = res.fetchall()
-    return rows
+    return [row[0] for row in rows]
 
 def constraints_from_lists(cols: Iterable[str], vals: Iterable[Any]):
     c = ' AND '.join(f'"{k}"={maybe_quote(v)}' for k, v in zip(cols, vals))
