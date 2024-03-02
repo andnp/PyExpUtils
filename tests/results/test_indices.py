@@ -16,7 +16,7 @@ class TestIndices(unittest.TestCase):
         try:
             shutil.rmtree('.tmp')
             os.remove('.tmp.tar')
-        except:
+        except Exception:
             pass
 
     def test_listIndices(self):

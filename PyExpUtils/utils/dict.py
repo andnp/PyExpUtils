@@ -19,16 +19,16 @@ def flatKeys(d: Dict[Any, Any]) -> List[DictPath]:
     for key in keys:
         sub_keys: List[str] = []
 
-        if type(d[key]) is dict:
+        if isinstance(d[key], dict):
             sub_keys = flatKeys(d[key])
             out += [f'{key}.{subkey}' for subkey in sub_keys]
 
-        elif type(d[key]) is list:
+        elif isinstance(d[key], list):
             sub_keys = []
             for i in range(len(d[key])):
                 sub_keys.append(f'[{i}]')
 
-            if type(d[key][0]) is dict:
+            if isinstance(d[key][0], dict):
                 sub_keys = []
                 for i, sub in enumerate(d[key]):
                     sub_keys += [ f'[{i}].{subkey}' for subkey in flatKeys(sub) ]
@@ -122,7 +122,7 @@ def subset(d1: Dict[Any, Any], d2: Dict[Any, Any], ignore: Sequence[Any] = []):
         if k not in d2:
             return False
 
-        if type(d1[k]) is dict and type(d2[k]) is dict:
+        if isinstance(d1[k], dict) and isinstance(d2[k], dict):
             is_subsubset = subset(d1[k], d2[k])
             if not is_subsubset:
                 return False
@@ -137,7 +137,7 @@ def partialEqual(d1: Dict[Any, Any], d2: Dict[Any, Any]):
         if k not in d2:
             continue
 
-        if type(d1[k]) is dict and type(d2[k]) is dict:
+        if isinstance(d1[k], dict) and isinstance(d2[k], dict):
             is_subpartialEqual = partialEqual(d1[k], d2[k])
             if not is_subpartialEqual:
                 return False

@@ -5,31 +5,8 @@ version = "7.3.0"
 tag_format = "$version"
 version_files = ["pyproject.toml"]
 
-[tool.pdm]
-[[tool.pdm.source]]
-url = "https://pypi.org/simple"
-verify_ssl = true
-name = "pypi"
-
-[[tool.pdm.source]]
-url = "https://pypi.org/simple"
-verify_ssl = true
-name = "pypi"
-[tool.pdm.dev-dependencies]
-dev = [
-    "flake8",
-    "commitizen",
-    "pre-commit",
-    "matplotlib",
-    "types-filelock",
-    "build",
-    "twine",
-    "vistir==0.6.1",
-    "pyright>=1.1.324",
-]
-
-[tool.mypy]
-mypy_path = "typings"
+[tool.ruff.lint]
+ignore = ['E701', 'E731', 'E741']
 
 [project]
 name = "PyExpUtils-andnp"

@@ -9,7 +9,7 @@ class TestFileSystemContext(unittest.TestCase):
         try:
             shutil.rmtree('.tmp')
             os.remove('path.tar')
-        except:
+        except Exception:
             pass
 
     def test_getBase(self):
@@ -71,7 +71,7 @@ class TestRegressions(unittest.TestCase):
         try:
             shutil.rmtree('.tmp')
             os.remove('path.tar')
-        except:
+        except Exception:
             pass
 
     def test_resolveNoBase(self):

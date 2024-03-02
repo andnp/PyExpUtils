@@ -269,7 +269,7 @@ def _flattenKeys(d: Dict[str, Any]):
 # the resulting df will have NaNs for the shorter rows
 def _readUnevenCsv(f: str):
     with open(f, 'r') as temp_f:
-        col_count = ( len(l.split(",")) for l in temp_f.readlines() )
+        col_count = ( len(line.split(",")) for line in temp_f.readlines() )
         m_cols = max(col_count)
         names = list(map(str, range(0, m_cols)))
 

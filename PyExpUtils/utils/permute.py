@@ -75,7 +75,7 @@ def _flattenToKeyValues(sweeps: Record):
         values = get(sweeps, key)
 
         # allow parameters to be set like "alpha": 0.1 as a shortcut
-        if type(values) is not list:
+        if not isinstance(values, list):
             values = [values]
 
         out.append((key, values))
