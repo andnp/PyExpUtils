@@ -4,7 +4,6 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Optional
 
-import PyExpUtils.runner.parallel as Parallel
 from PyExpUtils.utils.cmdline import flagString
 
 """doc
@@ -174,12 +173,8 @@ def buildParallel(executable: str, tasks: Iterable[Any], opts: SingleNodeOptions
     if isinstance(opts, SingleNodeOptions):
         parallel_exec = executable
 
-    return Parallel.build({
-        'executable': parallel_exec,
-        'tasks': tasks,
-        'cores': cores,
-        'delay': 0.5, # because srun interacts with the scheduler, a slight delay helps prevent intermittent errors
-    } | parallelOpts)
+    task_str = ' '.join(map(str, tasks))
+    return f'run-parallel --parallel {cores} --exec "{parallel_exec}" --tasks {task_str}'
 
 def schedule(script: str, opts: Optional[SingleNodeOptions | MultiNodeOptions] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
     with open(script_name, 'w') as f:
