@@ -14,17 +14,25 @@ jobs:
         python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up PDM
-      uses: pdm-project/setup-pdm@v3
+    - uses: actions/checkout@v4
+
+    - uses: chartboost/ruff-action@v1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
-        pdm install
+        python -m venv .venv
+        source .venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Test
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: pdm run ./scripts/run_tests.sh
+      run: ./scripts/run_tests.sh
