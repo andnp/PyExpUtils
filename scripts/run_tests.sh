@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source .venv/bin/activate
+
 # pyright --stats
 
 export PYTHONPATH=PyExpUtils

@@ -26,6 +26,17 @@ requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "commitizen",
+    "pre-commit",
+    "types-filelock",
+    "build",
+    "twine",
+    "pyright>=1.1.324",
+]
+
 [project.scripts]
 run-parallel = "bin.parallel_runner:main"
 

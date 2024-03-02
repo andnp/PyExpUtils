@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+source .venv/bin/activate
 
 git config credential.helper "store --file=.git/credentials"
 echo "https://${GH_TOKEN}:@github.com" > .git/credentials
@@ -15,8 +16,13 @@ git checkout -f master
 cz bump --no-verify --yes --check-consistency
 
 # push to pypi repository
-pdm build
+python -m build
 python -m twine upload -u __token__ -p ${PYPI_TOKEN} --non-interactive dist/*
+
+pip install uv
+uv pip compile --extra=dev pyproject.toml -o requirements.txt
+git add requirements.txt
+git commit -m "ci: update requirements" || echo "No changes to commit"
 
 git push
 git push --tags
