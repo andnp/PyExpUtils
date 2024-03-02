@@ -8,9 +8,9 @@ from PyExpUtils.utils.types import AnyNumber, ForAble, T
 def npPadUneven(arr: Sequence[np.ndarray], val: float) -> np.ndarray:
     longest = len(arr[0])
     for sub in arr:
-        l = sub.shape[0]
-        if l > longest:
-            longest = l
+        a = sub.shape[0]
+        if a > longest:
+            longest = a
 
     out = np.empty((len(arr), longest))
     for i, sub in enumerate(arr):
@@ -21,9 +21,9 @@ def npPadUneven(arr: Sequence[np.ndarray], val: float) -> np.ndarray:
 def padUneven(arr: List[List[T]], val: T) -> List[List[T]]:
     longest = len(arr[0])
     for sub in arr:
-        l = len(sub)
-        if l > longest:
-            longest = l
+        a = len(sub)
+        if a > longest:
+            longest = a
 
     out: List[List[T]] = []
     for sub in arr:
@@ -52,8 +52,8 @@ def first(listOrGen: Union[Sequence[T], Iterator[T]]):
 
     return next(listOrGen)
 
-def last(l: Sequence[T]) -> T:
-    return l[len(l) - 1]
+def last(a: Sequence[T]) -> T:
+    return a[len(a) - 1]
 
 def partition(gen: ForAble[T], pred: Callable[[T], bool]):
     t1, t2 = tee(gen)
