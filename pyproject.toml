@@ -38,7 +38,7 @@ dev = [
 ]
 
 [project.scripts]
-run-parallel = "bin.parallel_runner:main"
+run-parallel = "PyExpUtils.parallel_runner:main"
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
