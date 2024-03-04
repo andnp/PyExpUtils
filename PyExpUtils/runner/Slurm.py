@@ -122,8 +122,13 @@ def memory_in_mb(memory: str | float) -> float:
 
     raise Exception('Unknown memory unit')
 
-def to_cmdline_flags(options: SingleNodeOptions | MultiNodeOptions):
-    validate(options)
+def to_cmdline_flags(
+    options: SingleNodeOptions | MultiNodeOptions,
+    skip_validation: bool = False,
+) -> str:
+    if not skip_validation:
+        validate(options)
+
     args = [
         ('--account', options.account),
         ('--time', options.time),
@@ -176,13 +181,19 @@ def buildParallel(executable: str, tasks: Iterable[Any], opts: SingleNodeOptions
     task_str = ' '.join(map(str, tasks))
     return f'run-parallel --parallel {cores} --exec "{parallel_exec}" --tasks {task_str}'
 
-def schedule(script: str, opts: Optional[SingleNodeOptions | MultiNodeOptions] = None, script_name: str = 'auto_slurm.sh', cleanup: bool = True):
+def schedule(
+    script: str,
+    opts: Optional[SingleNodeOptions | MultiNodeOptions] = None,
+    script_name: str = 'auto_slurm.sh',
+    cleanup: bool = True,
+    skip_validation: bool = False,
+) -> None:
     with open(script_name, 'w') as f:
         f.write(script)
 
     cmdArgs = ''
     if opts is not None:
-        cmdArgs = to_cmdline_flags(opts)
+        cmdArgs = to_cmdline_flags(opts, skip_validation=skip_validation)
 
     os.system(f'sbatch {cmdArgs} {script_name}')
 
