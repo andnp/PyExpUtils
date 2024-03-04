@@ -2,6 +2,7 @@
 #    uv pip compile --extra=dev pyproject.toml -o requirements.txt
 argcomplete==3.2.2
     # via commitizen
+build==1.1.1
 certifi==2024.2.2
     # via requests
 cffi==1.16.0
@@ -67,7 +68,9 @@ numpy==1.26.4
     #   numba
     #   pandas
 packaging==23.2
-    # via commitizen
+    # via
+    #   build
+    #   commitizen
 pandas==2.2.1
 pkginfo==1.9.6
     # via twine
@@ -82,6 +85,8 @@ pygments==2.17.2
     # via
     #   readme-renderer
     #   rich
+pyproject-hooks==1.0.0
+    # via build
 pyright==1.1.352
 python-dateutil==2.9.0.post0
     # via pandas
