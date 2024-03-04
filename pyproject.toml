@@ -1,7 +1,7 @@
 [tool]
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "8.0.0"
+version = "8.1.0"
 tag_format = "$version"
 version_files = ["pyproject.toml"]
 
@@ -10,7 +10,7 @@ ignore = ['E701', 'E731', 'E741']
 
 [project]
 name = "PyExpUtils-andnp"
-version = "8.0.0"
+version = "8.1.0"
 description = "A small set of utilities for RL and ML experiments"
 authors = [
     {name = "Andy Patterson", email = "andnpatterson@gmail.com"},
