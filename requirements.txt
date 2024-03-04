@@ -72,7 +72,7 @@ packaging==23.2
     #   build
     #   commitizen
 pandas==2.2.1
-pkginfo==1.9.6
+pkginfo==1.10.0
     # via twine
 platformdirs==4.2.0
     # via virtualenv
