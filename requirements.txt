@@ -67,7 +67,7 @@ numpy==1.26.4
     # via
     #   numba
     #   pandas
-packaging==23.2
+packaging==24.0
     # via
     #   build
     #   commitizen
