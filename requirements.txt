@@ -133,5 +133,5 @@ virtualenv==20.25.1
     # via pre-commit
 wcwidth==0.2.13
     # via prompt-toolkit
-zipp==3.17.0
+zipp==3.18.1
     # via importlib-metadata
