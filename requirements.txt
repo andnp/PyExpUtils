@@ -77,7 +77,7 @@ pkginfo==1.10.0
 platformdirs==4.2.0
     # via virtualenv
 pre-commit==3.7.0
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.43
     # via questionary
 pycparser==2.21
     # via cffi
