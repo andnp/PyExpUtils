@@ -31,7 +31,7 @@ identify==2.5.35
     # via pre-commit
 idna==3.6
     # via requests
-importlib-metadata==7.0.2
+importlib-metadata==7.1.0
     # via
     #   commitizen
     #   keyring
