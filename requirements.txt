@@ -2,7 +2,7 @@
 #    uv pip compile --extra=dev pyproject.toml -o requirements.txt
 argcomplete==3.2.2
     # via commitizen
-build==1.1.1
+build==1.2.1
 certifi==2024.2.2
     # via requests
 cffi==1.16.0
