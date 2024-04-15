@@ -71,7 +71,7 @@ packaging==24.0
     # via
     #   build
     #   commitizen
-pandas==2.2.1
+pandas==2.2.2
 pkginfo==1.10.0
     # via twine
 platformdirs==4.2.0
