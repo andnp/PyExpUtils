@@ -15,7 +15,7 @@ charset-normalizer==3.3.2
     #   requests
 colorama==0.4.6
     # via commitizen
-commitizen==3.18.4
+commitizen==3.22.0
 connectorx==0.3.2
 cryptography==42.0.5
     # via secretstorage
