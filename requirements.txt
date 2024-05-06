@@ -74,7 +74,7 @@ packaging==24.0
 pandas==2.2.2
 pkginfo==1.10.0
     # via twine
-platformdirs==4.2.0
+platformdirs==4.2.1
     # via virtualenv
 pre-commit==3.7.0
 prompt-toolkit==3.0.36
