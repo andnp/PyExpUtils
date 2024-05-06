@@ -113,7 +113,7 @@ rich==13.7.1
 ruff==0.4.1
 secretstorage==3.3.3
     # via keyring
-setuptools==69.2.0
+setuptools==69.5.1
     # via nodeenv
 six==1.16.0
     # via python-dateutil
