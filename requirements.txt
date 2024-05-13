@@ -23,7 +23,7 @@ decli==0.6.1
     # via commitizen
 distlib==0.3.8
     # via virtualenv
-docutils==0.20.1
+docutils==0.21.2
     # via readme-renderer
 filelock==3.13.3
     # via virtualenv
