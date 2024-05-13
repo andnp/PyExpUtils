@@ -119,7 +119,7 @@ six==1.16.0
     # via python-dateutil
 termcolor==2.4.0
     # via commitizen
-tomlkit==0.12.4
+tomlkit==0.12.5
     # via commitizen
 twine==5.0.0
 types-filelock==3.2.7
