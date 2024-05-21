@@ -100,7 +100,7 @@ questionary==2.0.1
     # via commitizen
 readme-renderer==43.0
     # via twine
-requests==2.31.0
+requests==2.32.0
     # via
     #   requests-toolbelt
     #   twine
