@@ -87,7 +87,7 @@ pygments==2.18.0
     #   rich
 pyproject-hooks==1.1.0
     # via build
-pyright==1.1.358
+pyright==1.1.365
 python-dateutil==2.9.0.post0
     # via pandas
 pytz==2024.1
