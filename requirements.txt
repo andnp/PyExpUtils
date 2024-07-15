@@ -3,7 +3,7 @@
 argcomplete==3.2.2
     # via commitizen
 build==1.2.1
-certifi==2024.2.2
+certifi==2024.7.4
     # via requests
 cffi==1.16.0
     # via cryptography
@@ -113,7 +113,7 @@ rich==13.7.1
 ruff==0.4.4
 secretstorage==3.3.3
     # via keyring
-setuptools==69.5.1
+setuptools==70.0.0
     # via nodeenv
 six==1.16.0
     # via python-dateutil
@@ -125,7 +125,7 @@ twine==5.0.0
 types-filelock==3.2.7
 tzdata==2024.1
     # via pandas
-urllib3==2.2.1
+urllib3==2.2.2
     # via
     #   requests
     #   twine
