@@ -56,7 +56,7 @@ mdurl==0.1.2
     # via markdown-it-py
 more-itertools==10.2.0
     # via jaraco-classes
-nh3==0.2.17
+nh3==0.2.18
     # via readme-renderer
 nodeenv==1.8.0
     # via
