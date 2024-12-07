@@ -70,7 +70,7 @@ more-itertools==10.2.0
     #   jaraco-functools
 nh3==0.2.18
     # via readme-renderer
-nodeenv==1.8.0
+nodeenv==1.9.1
     # via
     #   pre-commit
     #   pyright
