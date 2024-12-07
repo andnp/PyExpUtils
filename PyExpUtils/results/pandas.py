@@ -252,6 +252,11 @@ def _flattenKeys(d: Dict[str, Any]):
             for sk, sv in _flattenKeys(v).items():
                 out[f'{k}.{sk}'] = sv
 
+        # if we have a list of lists, add top-level list as key
+        elif isinstance(v, list) and isinstance(v[0], list):
+            for i, sv in enumerate(v):
+                out[f'{k}.[{i}]'] = sv
+
         # if we have a list of objects, keep digging
         elif isinstance(v, list) and isinstance(v[0], dict):
             for i, sv in enumerate(v):
