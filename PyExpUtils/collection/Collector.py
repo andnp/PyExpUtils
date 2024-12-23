@@ -64,6 +64,10 @@ class Collector:
         self._idxs = set[int]()
         self._keys = set[str]()
 
+        # if an idx is provided add it to the cache
+        if idx is not None:
+            self._idxs.add(idx)
+
     # -------------
     # -- Context --
     # -------------
