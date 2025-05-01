@@ -58,7 +58,7 @@ class MultiNodeOptions:
 # -- Validation --
 # ----------------
 def check_account(account: str):
-    assert account.startswith('rrg-') or account.startswith('def-')
+    assert account.startswith('rrg-') or account.startswith('def-') or account.startswith('aip-')
     assert not account.endswith('_cpu') and not account.endswith('_gpu')
 
 def check_time(time: str):
